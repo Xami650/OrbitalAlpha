@@ -74,7 +74,7 @@ public class NasaDatabaseManager {
             }
 
             pstmt.executeBatch();
-            System.out.println("✅ Se han insertado " + weatherDataList.size() + " registros en la base de datos.");
+            System.out.println("Se han insertado " + weatherDataList.size() + " registros en la base de datos.");
 
         } catch (SQLException e) {
             System.err.println("Error al insertar los datos: " + e.getMessage());

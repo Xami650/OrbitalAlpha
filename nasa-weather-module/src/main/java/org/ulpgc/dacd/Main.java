@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Iniciando OrbitalAlpha... Motor de automatización multizona activado.");
+        System.out.println("Iniciando OrbitalAlpha...");
 
         NasaDatabaseManager dbManager = new NasaDatabaseManager();
         dbManager.initializeDatabase();
@@ -46,7 +46,7 @@ public class Main {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
         Runnable fetchAndStoreTask = () -> {
-            System.out.println("\n--- Iniciando escaneo de microclimas (" + java.time.LocalDateTime.now() + ") ---");
+            System.out.println("\nIniciando escaneo de microclimas (" + java.time.LocalDateTime.now() + ") ---");
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
             String startDate = LocalDate.now().minusDays(7).format(formatter);
@@ -62,7 +62,7 @@ public class Main {
                     System.out.println("⚠️ Sin datos para " + crop.name());
                 }
             }
-            System.out.println("--- Ciclo finalizado. Modo reposo durante 6 horas ---");
+            System.out.println("Ciclo finalizado, hasta dentro de 6 horas ");
         };
 
         // Ejecutar ahora y repetir cada 6 horas
