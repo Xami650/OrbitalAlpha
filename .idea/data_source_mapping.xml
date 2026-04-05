@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/market-data-module/src/main/java/org/ulpgc/dacd/SqliteMarketStore.java" value="4c283656-37e1-4380-abba-0088ef8e4aa1" />
+  </component>
+</project>
