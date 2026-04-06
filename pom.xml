@@ -8,6 +8,7 @@
     <artifactId>OrbitalAlpha</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <modules>
         <module>nasa-weather-module</module>
         <module>market-data-module</module>
@@ -37,6 +38,19 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.51.3.0</version>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

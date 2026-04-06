@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="oraculo_cultivos" uuid="42e2310a-8689-4a6d-8a6e-0a415278fe8a">
+    <data-source source="LOCAL" name="climate_data" uuid="cd97bedb-e6c2-4eb8-94e7-42866c6353c0">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/oraculo_cultivos.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/climate_data.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
