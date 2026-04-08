@@ -23,21 +23,23 @@ public class SqliteClimateStore implements ClimateStore {
     private static final String CREATE_TABLE_SQL = """
             CREATE TABLE IF NOT EXISTS climate_daily_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                location_id TEXT NOT NULL,
+                producer_id TEXT NOT NULL,
+                producer_name TEXT NOT NULL,
+                commodity_type TEXT NOT NULL,
                 date TEXT NOT NULL,
                 precipitation REAL,
                 root_zone_soil_wetness REAL,
                 temperature_max REAL,
                 temperature_min REAL,
                 captured_at TEXT NOT NULL,
-                UNIQUE(location_id, date)
+                UNIQUE(producer_id, date)
             );
             """;
 
     private static final String INSERT_SQL = """
             INSERT OR IGNORE INTO climate_daily_data
-            (location_id, date, precipitation, root_zone_soil_wetness, temperature_max, temperature_min, captured_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (producer_id, producer_name, commodity_type, date, precipitation, root_zone_soil_wetness, temperature_max, temperature_min, captured_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
     private final String dbUrl;
@@ -74,13 +76,15 @@ public class SqliteClimateStore implements ClimateStore {
             String capturedAt = Instant.now().toString();
 
             for (ClimateData data : climateDataList) {
-                pstmt.setString(1, data.locationId());
-                pstmt.setString(2, data.date());
-                pstmt.setDouble(3, data.precipitation());
-                pstmt.setDouble(4, data.rootZoneSoilWetness());
-                pstmt.setDouble(5, data.temperatureMax());
-                pstmt.setDouble(6, data.temperatureMin());
-                pstmt.setString(7, capturedAt);
+                pstmt.setString(1, data.producerId());
+                pstmt.setString(2, data.producerName());
+                pstmt.setString(3, data.commodityType());
+                pstmt.setString(4, data.date());
+                pstmt.setDouble(5, data.precipitation());
+                pstmt.setDouble(6, data.rootZoneSoilWetness());
+                pstmt.setDouble(7, data.temperatureMax());
+                pstmt.setDouble(8, data.temperatureMin());
+                pstmt.setString(9, capturedAt);
                 pstmt.addBatch();
             }
 

@@ -15,7 +15,13 @@ public class ClimateController {
     private static final int COLLECTION_INTERVAL_HOURS = 24;
     private static final long API_RATE_LIMIT_PAUSE_MS = 1000;
 
-    private static final List<String> LOCATIONS_TO_TRACK = List.of("LPA", "MAD", "BCN", "SVQ", "VLC");
+    private static final List<String> PRODUCERS_TO_TRACK = List.of(
+            "WHEAT_1", "WHEAT_2", "WHEAT_3", "WHEAT_4", "WHEAT_5",
+            "CORN_1", "CORN_2", "CORN_3", "CORN_4", "CORN_5",
+            "SOY_1", "SOY_2", "SOY_3", "SOY_4", "SOY_5",
+            "COFFEE_1", "COFFEE_2", "COFFEE_3", "COFFEE_4", "COFFEE_5",
+            "NATGAS_1", "NATGAS_2", "NATGAS_3", "NATGAS_4", "NATGAS_5"
+    );
 
     private final ClimateFeeder feeder;
     private final ClimateStore store;
@@ -54,13 +60,13 @@ public class ClimateController {
     private void runCycle() {
         logger.info("Iniciando ciclo de recolección climática...");
 
-        for (String locationId : LOCATIONS_TO_TRACK) {
-            logger.info("Consultando ubicación {}...", locationId);
+        for (String producerId : PRODUCERS_TO_TRACK) {
+            logger.info("Consultando productor o región {}...", producerId);
 
-            List<ClimateData> climateData = feeder.fetch(locationId);
+            List<ClimateData> climateData = feeder.fetch(producerId);
 
             if (climateData.isEmpty()) {
-                logger.warn("No se obtuvieron datos para {}.", locationId);
+                logger.warn("No se obtuvieron datos para {}.", producerId);
             } else {
                 store.store(climateData);
             }
