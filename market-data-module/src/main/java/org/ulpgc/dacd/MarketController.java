@@ -55,16 +55,17 @@ public class MarketController {
         logger.info("Iniciando ciclo de recolección de mercado...");
 
         for (String symbol : SYMBOLS_TO_TRACK) {
-            logger.info("Consultando símbolo {}...", symbol);
-
-            List<MarketData> marketData = feeder.fetch(symbol);
-
-            if (marketData.isEmpty()) {
-                logger.warn("No se obtuvieron datos para {}.", symbol);
-            } else {
-                store.store(marketData);
+            try {
+                logger.info("Consultando símbolo {}...", symbol);
+                List<MarketData> marketData = feeder.fetch(symbol);
+                if (marketData.isEmpty()) {
+                    logger.warn("No se obtuvieron datos para {}.", symbol);
+                } else {
+                    store.store(marketData);
+                }
+            } catch (Exception e) {
+                logger.error("Error procesando símbolo {}.", symbol, e);
             }
-
             pauseBetweenRequests();
         }
 
