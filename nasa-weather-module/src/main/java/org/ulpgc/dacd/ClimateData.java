@@ -1,7 +1,9 @@
 package org.ulpgc.dacd;
 
 public record ClimateData(
-        String locationId,
+        String producerId,
+        String producerName,
+        String commodityType,
         String date,
         double precipitation,
         double rootZoneSoilWetness,
