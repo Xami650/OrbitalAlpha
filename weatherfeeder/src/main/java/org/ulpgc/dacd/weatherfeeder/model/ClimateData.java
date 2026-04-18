@@ -1,4 +1,4 @@
-package org.ulpgc.weatherfeeder;
+package org.ulpgc.dacd.weatherfeeder.model;
 
 public record ClimateData(
         String producerId,
