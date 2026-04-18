@@ -1,4 +1,4 @@
-package org.ulpgc.dacd;
+package org.ulpgc.weatherfeeder;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.ulpgc.dacd</groupId>
-    <artifactId>nasa-weather-module</artifactId>
+    <artifactId>weatherfeeder</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>

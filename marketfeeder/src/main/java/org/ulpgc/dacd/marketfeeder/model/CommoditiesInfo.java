@@ -1,10 +1,10 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.marketfeeder.model;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
-public record MarketData(
+public record CommoditiesInfo(
         String symbol,
-        String weekDate,
+        Instant priceTimestamp,
         double open,
         double high,
         double low,

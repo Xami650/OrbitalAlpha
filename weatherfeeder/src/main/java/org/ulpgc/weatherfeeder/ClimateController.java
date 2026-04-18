@@ -1,4 +1,4 @@
-package org.ulpgc.dacd;
+package org.ulpgc.weatherfeeder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

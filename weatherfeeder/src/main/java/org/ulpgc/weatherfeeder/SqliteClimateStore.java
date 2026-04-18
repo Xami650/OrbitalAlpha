@@ -1,4 +1,4 @@
-package org.ulpgc.dacd;
+package org.ulpgc.weatherfeeder;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
