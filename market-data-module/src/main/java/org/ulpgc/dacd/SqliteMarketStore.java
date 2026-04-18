@@ -69,33 +69,50 @@ public class SqliteMarketStore implements MarketStore {
             logger.warn("No hay datos para almacenar.");
             return;
         }
-
-        try (Connection connection = connect();
-             PreparedStatement pstmt = connection.prepareStatement(INSERT_SQL)) {
-
+        Connection connection = null;
+        try {
+            connection = connect();
             connection.setAutoCommit(false);
-            String capturedAt = Instant.now().toString();
 
-            for (MarketData data : marketDataList) {
-                pstmt.setString(1, data.symbol());
-                pstmt.setString(2, data.weekDate());
-                pstmt.setDouble(3, data.open());
-                pstmt.setDouble(4, data.high());
-                pstmt.setDouble(5, data.low());
-                pstmt.setDouble(6, data.close());
-                pstmt.setDouble(7, data.adjustedClose());
-                pstmt.setLong(8, data.volume());
-                pstmt.setDouble(9, data.dividendAmount());
-                pstmt.setString(10, capturedAt);
-                pstmt.addBatch();
+            try (PreparedStatement pstmt = connection.prepareStatement(INSERT_SQL)) {
+                String capturedAt = Instant.now().toString();
+
+                for (MarketData data : marketDataList) {
+                    pstmt.setString(1, data.symbol());
+                    pstmt.setString(2, data.weekDate());
+                    pstmt.setDouble(3, data.open());
+                    pstmt.setDouble(4, data.high());
+                    pstmt.setDouble(5, data.low());
+                    pstmt.setDouble(6, data.close());
+                    pstmt.setDouble(7, data.adjustedClose());
+                    pstmt.setLong(8, data.volume());
+                    pstmt.setDouble(9, data.dividendAmount());
+                    pstmt.setString(10, capturedAt);
+                    pstmt.addBatch();
+                }
+
+                pstmt.executeBatch();
+                connection.commit();
+                logger.info("Intentados {} registros para almacenamiento.", marketDataList.size());
             }
-
-            pstmt.executeBatch();
-            connection.commit();
-            logger.info("Procesados {} registros para almacenamiento.", marketDataList.size());
-
         } catch (SQLException e) {
             logger.error("Error almacenando datos en SQLite.", e);
+
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackError) {
+                    logger.error("Error al hacer rollback.", rollbackError);
+                }
+            }
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    logger.error("Error cerrando conexión.", e);
+                }
+            }
         }
     }
 

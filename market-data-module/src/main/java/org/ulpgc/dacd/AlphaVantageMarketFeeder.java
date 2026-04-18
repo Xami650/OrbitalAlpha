@@ -46,6 +46,11 @@ public class AlphaVantageMarketFeeder implements MarketFeeder {
 
     @Override
     public List<MarketData> fetch(String symbol) {
+        if (symbol == null || symbol.isBlank()) {
+            logger.warn("Símbolo inválido.");
+            return Collections.emptyList();
+        }
+
         String url = buildUrl(symbol);
         Request request = buildRequest(url);
 
