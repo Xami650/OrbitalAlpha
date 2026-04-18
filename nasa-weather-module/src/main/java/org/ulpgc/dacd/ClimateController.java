@@ -16,15 +16,15 @@ public class ClimateController {
     private static final long API_RATE_LIMIT_PAUSE_MS = 1000;
 
     private static final List<String> PRODUCERS_TO_TRACK = List.of(
-            // WHEAT
+            // TRIGO
             "WHEAT_1", "WHEAT_2", "WHEAT_3", "WHEAT_4", "WHEAT_5",
-            // CORN
+            // MAIZ
             "CORN_1", "CORN_2", "CORN_3", "CORN_4", "CORN_5",
-            // SOY BEANS
+            // SOJA
             "SOY_1", "SOY_2", "SOY_3", "SOY_4", "SOY_5",
-            // COFFEE
+            // CAFE
             "COFFEE_1", "COFFEE_2", "COFFEE_3", "COFFEE_4", "COFFEE_5",
-            // NATURAL GAS
+            // GAS NATURAL
             "NATGAS_1", "NATGAS_2", "NATGAS_3", "NATGAS_4", "NATGAS_5"
     );
 
