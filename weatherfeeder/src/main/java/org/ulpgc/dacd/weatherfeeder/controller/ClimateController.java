@@ -1,11 +1,15 @@
 package org.ulpgc.dacd.weatherfeeder.controller;
 
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ulpgc.dacd.weatherfeeder.events.WeatherEvent;
+import org.ulpgc.dacd.weatherfeeder.mappers.WeatherEventMapper;
 import org.ulpgc.dacd.weatherfeeder.model.ClimateData;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo;
 import org.ulpgc.dacd.weatherfeeder.model.feeders.ClimateFeeder;
-import org.ulpgc.dacd.weatherfeeder.model.storers.ClimateStore;
+import org.ulpgc.dacd.weatherfeeder.publisher.EventPublisher;
+
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,15 +21,20 @@ public class ClimateController {
 
     private static final int COLLECTION_INTERVAL_HOURS = 24;
     private static final long API_RATE_LIMIT_PAUSE_MS = 1000;
+    private static final String WEATHER_TOPIC = "Weather";
 
     private final ClimateFeeder feeder;
-    private final ClimateStore store;
     private final ProducersInfo producersInfo;
+    private final EventPublisher publisher;
+    private final WeatherEventMapper eventMapper;
+    private final Gson gson;
 
-    public ClimateController(ClimateFeeder feeder, ClimateStore store, ProducersInfo producersInfo) {
+    public ClimateController(ClimateFeeder feeder, ProducersInfo producersInfo, EventPublisher publisher) {
         this.feeder = feeder;
-        this.store = store;
         this.producersInfo = producersInfo;
+        this.publisher = publisher;
+        this.eventMapper = new WeatherEventMapper();
+        this.gson = new Gson();
     }
 
     public void start() {
@@ -34,6 +43,7 @@ public class ClimateController {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Cerrando scheduler climático...");
             scheduler.shutdown();
+            publisher.close();
         }));
 
         scheduler.scheduleWithFixedDelay(
@@ -60,18 +70,26 @@ public class ClimateController {
         for (String producerId : producersInfo.getAllIds()) {
             logger.info("Consultando productor o región {}...", producerId);
 
-            List<ClimateData> climateData = feeder.fetch(producerId);
+            List<ClimateData> climateDataList = feeder.fetch(producerId);
 
-            if (climateData.isEmpty()) {
+            if (climateDataList.isEmpty()) {
                 logger.warn("No se obtuvieron datos para {}.", producerId);
             } else {
-                store.store(climateData);
+                publishEvents(climateDataList);
             }
 
             pauseBetweenRequests();
         }
 
         logger.info("Ciclo climático finalizado.");
+    }
+
+    private void publishEvents(List<ClimateData> climateDataList) {
+        for (ClimateData data : climateDataList) {
+            WeatherEvent event = eventMapper.map(data);
+            String json = gson.toJson(event);
+            publisher.publish(WEATHER_TOPIC, json);
+        }
     }
 
     private void pauseBetweenRequests() {
