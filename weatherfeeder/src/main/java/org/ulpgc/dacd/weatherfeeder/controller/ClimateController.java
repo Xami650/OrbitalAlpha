@@ -1,8 +1,11 @@
-package org.ulpgc.weatherfeeder;
+package org.ulpgc.dacd.weatherfeeder.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.ulpgc.dacd.weatherfeeder.model.ClimateData;
+import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo;
+import org.ulpgc.dacd.weatherfeeder.model.feeders.ClimateFeeder;
+import org.ulpgc.dacd.weatherfeeder.model.storers.ClimateStore;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -15,25 +18,14 @@ public class ClimateController {
     private static final int COLLECTION_INTERVAL_HOURS = 24;
     private static final long API_RATE_LIMIT_PAUSE_MS = 1000;
 
-    private static final List<String> PRODUCERS_TO_TRACK = List.of(
-            // WHEAT
-            "WHEAT_1", "WHEAT_2", "WHEAT_3", "WHEAT_4", "WHEAT_5",
-            // CORN
-            "CORN_1", "CORN_2", "CORN_3", "CORN_4", "CORN_5",
-            // SOY BEANS
-            "SOY_1", "SOY_2", "SOY_3", "SOY_4", "SOY_5",
-            // COFFEE
-            "COFFEE_1", "COFFEE_2", "COFFEE_3", "COFFEE_4", "COFFEE_5",
-            // NATURAL GAS
-            "NATGAS_1", "NATGAS_2", "NATGAS_3", "NATGAS_4", "NATGAS_5"
-    );
-
     private final ClimateFeeder feeder;
     private final ClimateStore store;
+    private final ProducersInfo producersInfo;
 
-    public ClimateController(ClimateFeeder feeder, ClimateStore store) {
+    public ClimateController(ClimateFeeder feeder, ClimateStore store, ProducersInfo producersInfo) {
         this.feeder = feeder;
         this.store = store;
+        this.producersInfo = producersInfo;
     }
 
     public void start() {
@@ -65,7 +57,7 @@ public class ClimateController {
     private void runCycle() {
         logger.info("Iniciando ciclo de recolección climática...");
 
-        for (String producerId : PRODUCERS_TO_TRACK) {
+        for (String producerId : producersInfo.getAllIds()) {
             logger.info("Consultando productor o región {}...", producerId);
 
             List<ClimateData> climateData = feeder.fetch(producerId);
