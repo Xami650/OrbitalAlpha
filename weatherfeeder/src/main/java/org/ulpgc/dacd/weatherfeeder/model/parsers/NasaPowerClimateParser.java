@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.weatherfeeder.model.ClimateData;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -112,6 +113,14 @@ public class NasaPowerClimateParser {
                 double rootZoneSoilWetness = readValue(gwetrootSeries, date, fillValue);
                 double temperatureMax = readValue(t2mMaxSeries, date, fillValue);
                 double temperatureMin = readValue(t2mMinSeries, date, fillValue);
+
+                if (Double.isNaN(precipitation)
+                        || Double.isNaN(rootZoneSoilWetness)
+                        || Double.isNaN(temperatureMax)
+                        || Double.isNaN(temperatureMin)) {
+                    logger.warn("Fecha {} de {} omitida por contener valores de relleno de NASA POWER.", date, producer.id());
+                    continue;
+                }
 
                 result.add(new ClimateData(
                         producer.id(),
