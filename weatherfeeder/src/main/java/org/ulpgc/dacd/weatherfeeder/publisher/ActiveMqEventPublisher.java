@@ -6,9 +6,13 @@ import jakarta.jms.JMSException;
 import jakarta.jms.MessageProducer;
 import jakarta.jms.Session;
 import jakarta.jms.TextMessage;
+import jakarta.jms.DeliveryMode;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.IllegalStateException;
 
 public class ActiveMqEventPublisher implements EventPublisher {
 
@@ -35,6 +39,8 @@ public class ActiveMqEventPublisher implements EventPublisher {
         try {
             Destination destination = session.createTopic(topicName);
             MessageProducer producer = session.createProducer(destination);
+            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+
             TextMessage textMessage = session.createTextMessage(message);
 
             producer.send(textMessage);

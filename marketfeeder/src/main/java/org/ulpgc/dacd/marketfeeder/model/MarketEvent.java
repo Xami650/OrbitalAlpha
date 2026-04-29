@@ -2,7 +2,9 @@ package org.ulpgc.dacd.marketfeeder.model;
 
 import java.time.Instant;
 
-public record CommoditiesInfo(
+public record MarketEvent(
+        Instant ts,
+        String ss,
         String symbol,
         Instant priceTimestamp,
         double open,
@@ -11,5 +13,6 @@ public record CommoditiesInfo(
         double close,
         double adjustedClose,
         long volume,
-        double dividendAmount
-) {}
+        double dividendAmount){
+
+}

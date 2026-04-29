@@ -2,12 +2,9 @@ package org.ulpgc.dacd.marketfeeder.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.marketfeeder.model.CommoditiesInfo;
-import org.ulpgc.dacd.marketfeeder.model.feeders.MarketFeeder;
-import org.ulpgc.dacd.marketfeeder.model.parsers.MarketParser;
-import org.ulpgc.dacd.marketfeeder.model.events.MarketEvent;
-import org.ulpgc.dacd.marketfeeder.model.events.MarketEventMapper;
-import org.ulpgc.dacd.marketfeeder.model.publisher.EventPublisher;
+import org.ulpgc.dacd.marketfeeder.controller.feeders.MarketFeeder;
+import org.ulpgc.dacd.marketfeeder.controller.publisher.MarketPublisher;
+import org.ulpgc.dacd.marketfeeder.model.MarketEvent;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -19,17 +16,13 @@ public class MarketController {
     private static final Logger logger = LoggerFactory.getLogger(MarketController.class);
 
     private final MarketFeeder feeder;
-    private final MarketParser parser;
-    private final MarketEventMapper mapper;
-    private final EventPublisher publisher;
+    private final MarketPublisher publisher;
     private final List<String> symbols;
     private final int intervalHours;
     private final long pauseMs;
 
-    public MarketController(MarketFeeder feeder, MarketParser parser, MarketEventMapper mapper, EventPublisher publisher, List<String> symbols, int intervalHours, long pauseMs) {
+    public MarketController(MarketFeeder feeder, MarketPublisher publisher, List<String> symbols, int intervalHours, long pauseMs) {
         this.feeder = feeder;
-        this.parser = parser;
-        this.mapper = mapper;
         this.publisher = publisher;
         this.symbols = symbols;
         this.intervalHours = intervalHours;
@@ -44,7 +37,6 @@ public class MarketController {
             scheduler.shutdown();
             publisher.close();
         }));
-
         scheduler.scheduleWithFixedDelay(
                 this::runCycleSafely,
                 0,
@@ -55,52 +47,47 @@ public class MarketController {
         logger.info("Market controller started. Collection every {} hours for symbols: {}.", intervalHours, symbols);
     }
 
-    private void runCycleSafely() {
+    private void runCycleSafely(){
         try {
             runCycle();
+        } catch (RuntimeException e) {
+            logger.error("Error 500. Aborting cycle.", e);
         } catch (Exception e) {
-            logger.error("Unexpected error in market cycle.", e);
+            logger.error("Unexpected error.", e);
         }
     }
 
     private void runCycle() {
         logger.info("Starting market data collection cycle...");
 
-        for (String symbol : symbols) {
+        symbols.forEach(symbol -> {
             try {
                 processSymbol(symbol);
-            } catch (Exception e) {
-                logger.error("Error processing symbol {}.", symbol, e);
+            } catch (com.google.gson.JsonSyntaxException e) {
+                logger.error("Error parsing JSON for {}. Next symbol...", symbol, e);
             }
             pauseBetweenRequests();
-        }
+        });
 
         logger.info("Market data collection cycle finished.");
     }
 
     private void processSymbol(String symbol) {
         logger.info("Querying symbol {}...", symbol);
-        String rawResponse = feeder.fetchWeeklySeriesRaw(symbol);
-        List<CommoditiesInfo> data = parser.parse(symbol, rawResponse);
+        List<MarketEvent> events = feeder.getMarketData(symbol);
 
-        if (data.isEmpty()) {
+        if (events.isEmpty()) {
             logger.warn("No data obtained for {}.", symbol);
             return;
         }
-
-        for (CommoditiesInfo commodity : data) {
-            MarketEvent event = mapper.toEvent(commodity);
-            publisher.publishEvent("CommodityPrice", event);
-        }
-
-        logger.info("Published {} events for {}.", data.size(), symbol);
+        events.forEach(publisher::publish);
+        logger.info("Published {} events for {}.", events.size(), symbol);
     }
     private void pauseBetweenRequests() {
         try {
             Thread.sleep(pauseMs);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.warn("Pause between requests was interrupted.", e);
         }
     }
 }

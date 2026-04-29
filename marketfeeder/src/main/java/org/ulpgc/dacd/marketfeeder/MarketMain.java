@@ -1,24 +1,24 @@
-package org.ulpgc.dacd.marketfeeder.view;
+package org.ulpgc.dacd.marketfeeder;
 
+import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.ulpgc.dacd.marketfeeder.controller.MarketController;
-import org.ulpgc.dacd.marketfeeder.model.feeders.AlphaVantageMarketFeeder;
-import org.ulpgc.dacd.marketfeeder.model.parsers.AlphaVantageMarketParser;
-import org.ulpgc.dacd.marketfeeder.model.feeders.MarketFeeder;
-import org.ulpgc.dacd.marketfeeder.model.parsers.MarketParser;
-import org.ulpgc.dacd.marketfeeder.model.events.MarketEventMapper;
-import org.ulpgc.dacd.marketfeeder.model.publisher.ActiveMqEventPublisher;
-import org.ulpgc.dacd.marketfeeder.model.publisher.EventPublisher;
+import org.ulpgc.dacd.marketfeeder.controller.feeders.AlphaVantageMarketFeeder;
+import org.ulpgc.dacd.marketfeeder.controller.feeders.MarketFeeder;
+import org.ulpgc.dacd.marketfeeder.controller.feeders.parsers.AlphaVantageMarketParser;
+import org.ulpgc.dacd.marketfeeder.controller.feeders.parsers.MarketParser;
+import org.ulpgc.dacd.marketfeeder.controller.publisher.ActiveMqEventPublisher;
+
 
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("UnnecessaryModifier")
 public class MarketMain {
 
     public static void main(String[] args) {
         String apiKey = System.getenv("MARKET_API_KEY");
-        if (apiKey == null || apiKey.isBlank()
-                || args.length < 1) {
+        if (apiKey == null || apiKey.isBlank() || args.length < 1) {
             System.out.println("Usage: java MarketMain <symbols_comma_separated> [intervalHours] [maxWeeks] [pauseMs]");
             System.out.println("Example: java MarketMain WEAT,CORN,SOYB,JO,UNG 24 520 15000");
             System.out.println("Supported commodity ETFs initially considered: WEAT (wheat), CORN (corn), SOYB (soybeans), JO (coffee), UNG (natural gas)");
@@ -39,11 +39,10 @@ public class MarketMain {
         int maxWeeks = args.length > 2 ? Integer.parseInt(args[2]) : 520;
         long pauseMs = args.length > 3 ? Long.parseLong(args[3]) : 15000L;
 
-        MarketFeeder feeder = new AlphaVantageMarketFeeder(apiKey);
+        OkHttpClient client = new OkHttpClient();
         MarketParser parser = new AlphaVantageMarketParser(maxWeeks);
-        MarketEventMapper mapper = new MarketEventMapper();
-        EventPublisher publisher = new ActiveMqEventPublisher("tcp://localhost:61616");
-
-        return new MarketController(feeder, parser, mapper, publisher, symbols, intervalHours, pauseMs);
+        MarketFeeder feeder = new AlphaVantageMarketFeeder(apiKey, client, parser);
+        ActiveMqEventPublisher publisher = new ActiveMqEventPublisher("tcp://localhost:61616", "CommodityPrice");
+        return new MarketController(feeder, publisher, symbols, intervalHours, pauseMs);
     }
 }
