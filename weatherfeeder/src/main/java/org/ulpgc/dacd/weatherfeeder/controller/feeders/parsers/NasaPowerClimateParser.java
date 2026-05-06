@@ -1,13 +1,14 @@
-package org.ulpgc.dacd.weatherfeeder.model.parsers;
+package org.ulpgc.dacd.weatherfeeder.controller.feeders.parsers;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.weatherfeeder.model.ClimateData;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
+import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,6 +16,8 @@ import java.util.List;
 public class NasaPowerClimateParser {
 
     private static final Logger logger = LoggerFactory.getLogger(NasaPowerClimateParser.class);
+
+    private static final String SOURCE_SYSTEM = "weatherfeeder";
 
     private static final String KEY_PROPERTIES = "properties";
     private static final String KEY_PARAMETER = "parameter";
@@ -27,7 +30,7 @@ public class NasaPowerClimateParser {
     private static final String PARAM_T2M_MAX = "T2M_MAX";
     private static final String PARAM_T2M_MIN = "T2M_MIN";
 
-    public List<ClimateData> parse(String jsonResponse, Producer producer, String producerId) {
+    public List<WeatherEvent> parse(String jsonResponse, Producer producer, String producerId) {
         try {
             JsonObject jsonObject = JsonParser.parseString(jsonResponse).getAsJsonObject();
 
@@ -49,6 +52,7 @@ public class NasaPowerClimateParser {
             JsonObject parameterObject = properties.getAsJsonObject(KEY_PARAMETER);
 
             return parseParameters(parameterObject, fillValue, producer);
+
         } catch (Exception e) {
             logger.error("Error parseando la respuesta de NASA POWER para {}.", producerId, e);
             return Collections.emptyList();
@@ -86,7 +90,7 @@ public class NasaPowerClimateParser {
         }
     }
 
-    private List<ClimateData> parseParameters(JsonObject parameterObject, Double fillValue, Producer producer) {
+    private List<WeatherEvent> parseParameters(JsonObject parameterObject, Double fillValue, Producer producer) {
         if (!hasAllRequiredParameters(parameterObject)) {
             logger.error("Faltan parámetros esperados en la respuesta de NASA POWER para {}.", producer.id());
             return Collections.emptyList();
@@ -100,7 +104,8 @@ public class NasaPowerClimateParser {
         List<String> dates = new ArrayList<>(prectotcorrSeries.keySet());
         dates.sort(Collections.reverseOrder());
 
-        List<ClimateData> result = new ArrayList<>();
+        List<WeatherEvent> result = new ArrayList<>();
+        Instant capturedAt = Instant.now();
 
         for (String date : dates) {
             if (!isCompleteDate(date, prectotcorrSeries, gwetrootSeries, t2mMaxSeries, t2mMinSeries)) {
@@ -122,7 +127,9 @@ public class NasaPowerClimateParser {
                     continue;
                 }
 
-                result.add(new ClimateData(
+                result.add(new WeatherEvent(
+                        capturedAt,
+                        SOURCE_SYSTEM,
                         producer.id(),
                         producer.name(),
                         producer.commodityType(),
@@ -132,6 +139,7 @@ public class NasaPowerClimateParser {
                         temperatureMax,
                         temperatureMin
                 ));
+
             } catch (Exception e) {
                 logger.warn("Día {} de {} ignorado por error de parseo.", date, producer.id(), e);
             }

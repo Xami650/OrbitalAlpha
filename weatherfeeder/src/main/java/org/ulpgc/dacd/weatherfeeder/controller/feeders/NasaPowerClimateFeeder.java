@@ -1,16 +1,18 @@
-package org.ulpgc.dacd.weatherfeeder.model.feeders;
+package org.ulpgc.dacd.weatherfeeder.controller.feeders;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.weatherfeeder.model.ClimateData;
+import org.ulpgc.dacd.weatherfeeder.controller.feeders.parsers.NasaPowerClimateParser;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
-import org.ulpgc.dacd.weatherfeeder.model.parsers.NasaPowerClimateParser;
+import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
+
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -43,16 +45,18 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
     }
 
     @Override
-    public List<ClimateData> fetch(String producerId) {
+    public List<WeatherEvent> fetch(String producerId) {
         Producer producer = producersInfo.getById(producerId);
 
         if (producer == null) {
-            logger.error("Productor o región no reconocida: {}", producerId);
+            logger.error("Productor o región no reconocido: {}", producerId);
             return Collections.emptyList();
         }
 
-        String endDate = LocalDate.now().format(API_DATE_FORMAT);
-        String startDate = LocalDate.now().minusDays(DAYS_TO_FETCH - 1L).format(API_DATE_FORMAT);
+        String endDate = LocalDate.now(ZoneOffset.UTC).format(API_DATE_FORMAT);
+        String startDate = LocalDate.now(ZoneOffset.UTC)
+                .minusDays(DAYS_TO_FETCH - 1L)
+                .format(API_DATE_FORMAT);
 
         String url = buildUrl(producer, startDate, endDate);
         Request request = buildRequest(url);
@@ -85,7 +89,7 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
                 .build();
     }
 
-    private List<ClimateData> handleResponse(Response response, Producer producer, String producerId) throws IOException {
+    private List<WeatherEvent> handleResponse(Response response, Producer producer, String producerId) throws IOException {
         if (!response.isSuccessful() || response.body() == null) {
             logger.error("HTTP {} al consultar NASA POWER para {}.", response.code(), producerId);
             return Collections.emptyList();

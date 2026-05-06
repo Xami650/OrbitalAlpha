@@ -20,14 +20,6 @@ public class ProducersInfo {
         return List.copyOf(producers.keySet());
     }
 
-    public boolean exists(String id) {
-        return producers.containsKey(id);
-    }
-
-    public Map<String, Producer> getAll() {
-        return Map.copyOf(producers);
-    }
-
     private Map<String, Producer> createProducers() {
         Map<String, Producer> map = new LinkedHashMap<>();
 
