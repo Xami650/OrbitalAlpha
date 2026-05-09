@@ -1,4 +1,4 @@
-package org.ulpgc.dacd.marketfeeder.controller.feeders.parsers;
+package org.ulpgc.dacd.marketfeeder.controller.feeder.parser;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

@@ -1,4 +1,4 @@
-package org.ulpgc.dacd.marketfeeder.controller.feeders;
+package org.ulpgc.dacd.marketfeeder.controller.feeder;
 
 import org.ulpgc.dacd.marketfeeder.model.MarketEvent;
 import java.util.List;

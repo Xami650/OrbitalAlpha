@@ -18,14 +18,14 @@ public class ActiveMqEventPublisher implements EventPublisher {
 
     private static final Logger logger = LoggerFactory.getLogger(ActiveMqEventPublisher.class);
 
-    private static final String BROKER_URL = "tcp://localhost:61616";
+    private static final String broker_url = "tcp://localhost:61616";
 
     private final Connection connection;
     private final Session session;
 
     public ActiveMqEventPublisher() {
         try {
-            ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(BROKER_URL);
+            ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(broker_url);
             this.connection = factory.createConnection();
             this.connection.start();
             this.session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

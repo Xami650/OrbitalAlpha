@@ -1,4 +1,4 @@
-package org.ulpgc.dacd.marketfeeder.controller.feeders.parsers;
+package org.ulpgc.dacd.marketfeeder.controller.feeder.parser;
 
 import org.ulpgc.dacd.marketfeeder.model.MarketEvent;
 
