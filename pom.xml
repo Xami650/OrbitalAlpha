@@ -13,6 +13,7 @@
         <module>weatherfeeder</module>
         <module>marketfeeder</module>
         <module>eventstorebuilder</module>
+        <module>businessunit</module>
     </modules>
 
     <properties>
