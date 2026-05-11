@@ -1,8 +1,13 @@
 package org.ulpgc.dacd.businessunit;
 
+import org.ulpgc.dacd.businessunit.controller.batch.BatchLayer;
+import org.ulpgc.dacd.businessunit.controller.batch.EventStoreReader;
+import org.ulpgc.dacd.businessunit.controller.batch.FileEventStoreReader;
 import org.ulpgc.dacd.businessunit.controller.config.BusinessUnitConfig;
 import org.ulpgc.dacd.businessunit.controller.config.BusinessUnitConfigLoader;
+import org.ulpgc.dacd.businessunit.controller.datamart.BatchDatamart;
 import org.ulpgc.dacd.businessunit.controller.datamart.ServingDatamart;
+import org.ulpgc.dacd.businessunit.controller.datamart.SqliteBatchDatamart;
 import org.ulpgc.dacd.businessunit.controller.datamart.SqliteServingDatamart;
 import org.ulpgc.dacd.businessunit.controller.serving.CommodityRiskService;
 import org.ulpgc.dacd.businessunit.view.BusinessUnitWebServer;
@@ -13,6 +18,13 @@ public class BusinessUnitMain {
 
     public static void main(String[] args) {
         BusinessUnitConfig config = new BusinessUnitConfigLoader(CONFIG_FILE).load();
+
+        BatchDatamart batchDatamart = new SqliteBatchDatamart(config.batchDatamartUrl());
+        batchDatamart.initialize();
+
+        EventStoreReader eventStoreReader = new FileEventStoreReader(config.eventStorePath());
+        BatchLayer batchLayer = new BatchLayer(eventStoreReader, batchDatamart);
+        batchLayer.rebuild();
 
         ServingDatamart servingDatamart = new SqliteServingDatamart(config.servingDatamartUrl());
         servingDatamart.initialize();
