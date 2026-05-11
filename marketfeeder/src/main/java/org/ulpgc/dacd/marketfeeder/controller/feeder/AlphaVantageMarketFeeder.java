@@ -1,10 +1,10 @@
-package org.ulpgc.dacd.marketfeeder.controller.feeders;
+package org.ulpgc.dacd.marketfeeder.controller.feeder;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.ulpgc.dacd.marketfeeder.controller.exceptions.FeederConnectionException;
-import org.ulpgc.dacd.marketfeeder.controller.feeders.parsers.MarketParser;
+import org.ulpgc.dacd.marketfeeder.controller.feeder.parser.MarketParser;
 import org.ulpgc.dacd.marketfeeder.model.MarketEvent;
 
 import java.io.IOException;

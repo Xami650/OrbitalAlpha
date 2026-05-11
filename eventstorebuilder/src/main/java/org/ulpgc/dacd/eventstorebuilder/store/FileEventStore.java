@@ -74,10 +74,15 @@ public class FileEventStore implements EventStore {
 
     private String readRequiredField(JsonObject event, String fieldName) {
         if (!event.has(fieldName) || event.get(fieldName).isJsonNull()) {
-            throw new IllegalArgumentException("Event does not contain required field: " + fieldName);
+            throw new IllegalArgumentException("Missing required field: " + fieldName);
         }
 
-        return event.get(fieldName).getAsString();
+        String value = event.get(fieldName).getAsString();
+
+        if (value.isBlank()) {
+            throw new IllegalArgumentException("Blank required field: " + fieldName);
+        }
+        return value.trim();
     }
 
     private boolean isDuplicatedEvent(Path eventFile, JsonObject newEvent) {

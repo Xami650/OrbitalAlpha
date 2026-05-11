@@ -2,7 +2,7 @@ package org.ulpgc.dacd.marketfeeder.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.marketfeeder.controller.feeders.MarketFeeder;
+import org.ulpgc.dacd.marketfeeder.controller.feeder.MarketFeeder;
 import org.ulpgc.dacd.marketfeeder.controller.publisher.MarketPublisher;
 import org.ulpgc.dacd.marketfeeder.model.MarketEvent;
 
@@ -59,17 +59,21 @@ public class MarketController {
 
     private void runCycle() {
         logger.info("Starting market data collection cycle...");
-
-        symbols.forEach(symbol -> {
-            try {
-                processSymbol(symbol);
-            } catch (com.google.gson.JsonSyntaxException e) {
-                logger.error("Error parsing JSON for {}. Next symbol...", symbol, e);
-            }
-            pauseBetweenRequests();
-        });
-
+        symbols.forEach(this::processSymbolWithApiPause);
         logger.info("Market data collection cycle finished.");
+    }
+
+    private void processSymbolWithApiPause(String symbol) {
+        processSymbolSafely(symbol);
+        pauseBetweenRequests();
+    }
+
+    private void processSymbolSafely(String symbol) {
+        try {
+            processSymbol(symbol);
+        } catch (com.google.gson.JsonSyntaxException e) {
+            logger.error("Error parsing JSON for {}. Next symbol...", symbol, e);
+        }
     }
 
     private void processSymbol(String symbol) {
@@ -83,6 +87,7 @@ public class MarketController {
         events.forEach(publisher::publish);
         logger.info("Published {} events for {}.", events.size(), symbol);
     }
+
     private void pauseBetweenRequests() {
         try {
             Thread.sleep(pauseMs);
