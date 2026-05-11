@@ -41,6 +41,12 @@ button:hover {
     gap: 16px;
 }
 
+.ticker {
+    font-size: 0.65em;
+    color: #6b7280;
+    font-weight: 600;
+}
+
 .card {
     background: white;
     border-radius: 12px;
