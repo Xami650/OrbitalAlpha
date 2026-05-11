@@ -1,12 +1,7 @@
-### ENVIRONMENT
+
 *.properties
 *.env.*
 
-target/
-*.db
-*.sqlite
-*.sqlite3
-*.pkl
 .venv/
 __pycache__/
 
