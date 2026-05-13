@@ -1,20 +1,17 @@
-package org.ulpgc.dacd.weatherfeeder.publisher;
+package org.ulpgc.dacd.weatherfeeder.controller.publisher;
 
 import jakarta.jms.Connection;
+import jakarta.jms.DeliveryMode;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSException;
 import jakarta.jms.MessageProducer;
 import jakarta.jms.Session;
 import jakarta.jms.TextMessage;
-import jakarta.jms.DeliveryMode;
-
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.IllegalStateException;
-
-public class ActiveMqEventPublisher implements EventPublisher {
+public class ActiveMqEventPublisher {
 
     private static final Logger logger = LoggerFactory.getLogger(ActiveMqEventPublisher.class);
 
@@ -29,36 +26,69 @@ public class ActiveMqEventPublisher implements EventPublisher {
             this.connection = factory.createConnection();
             this.connection.start();
             this.session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+            logger.info("Publisher conectado a ActiveMQ en {}.", broker_url);
+
         } catch (JMSException e) {
-            throw new IllegalStateException("No se pudo crear el publisher de ActiveMQ", e);
+            throw new IllegalStateException("No se pudo crear el publisher de ActiveMQ.", e);
         }
     }
 
-    @Override
     public void publish(String topicName, String message) {
+        MessageProducer producer = null;
+
         try {
             Destination destination = session.createTopic(topicName);
-            MessageProducer producer = session.createProducer(destination);
+            producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
             TextMessage textMessage = session.createTextMessage(message);
-
             producer.send(textMessage);
-            producer.close();
 
             logger.info("Evento publicado en topic {}.", topicName);
+
         } catch (JMSException e) {
             logger.error("Error publicando en topic {}.", topicName, e);
+
+        } finally {
+            closeProducer(producer);
         }
     }
 
-    @Override
-    public void close() {
+    private void closeProducer(MessageProducer producer) {
+        if (producer == null) {
+            return;
+        }
+
         try {
-            if (session != null) session.close();
-            if (connection != null) connection.close();
+            producer.close();
         } catch (JMSException e) {
-            logger.error("Error cerrando publisher de ActiveMQ.", e);
+            logger.warn("No se pudo cerrar el productor JMS.", e);
+        }
+    }
+
+    public void close() {
+        closeSession();
+        closeConnection();
+    }
+
+    private void closeSession() {
+        try {
+            if (session != null) {
+                session.close();
+            }
+        } catch (JMSException e) {
+            logger.error("Error cerrando la sesión de ActiveMQ.", e);
+        }
+    }
+
+    private void closeConnection() {
+        try {
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (JMSException e) {
+            logger.error("Error cerrando la conexión de ActiveMQ.", e);
         }
     }
 }
