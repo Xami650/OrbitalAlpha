@@ -38,6 +38,7 @@ public class BusinessUnitMain {
         servingLayer.rebuild();
 
         SpeedLayer speedLayer = createSpeedLayer(config, batchLayer, servingLayer);
+        Runtime.getRuntime().addShutdownHook(new Thread(speedLayer::stop));
         speedLayer.start();
 
         CommodityRiskService commodityRiskService = new CommodityRiskService(servingDatamart);
@@ -99,7 +100,6 @@ public class BusinessUnitMain {
     ) {
         EventSubscriber eventSubscriber = new ActiveMqEventSubscriber(
                 config.brokerUrl(),
-                config.clientId(),
                 config.topics()
         );
 

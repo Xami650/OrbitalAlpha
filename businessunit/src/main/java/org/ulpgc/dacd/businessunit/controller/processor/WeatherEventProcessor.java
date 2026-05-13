@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,17 +20,20 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
         historicalEvents.stream()
                 .filter(this::isWeatherEvent)
                 .map(this::parseJson)
-                .filter(json -> json.has("commodityType"))
-                .forEach(json -> {
-                    String commodity = mapCommodityTypeToSymbol(
-                            json.get("commodityType").getAsString()
-                    );
+                .filter(json -> json.has("commodityType") && json.has("date"))
+                .collect(java.util.stream.Collectors.groupingBy(
+                        json -> mapCommodityTypeToSymbol(json.get("commodityType").getAsString())
+                ))
+                .forEach((commodity, events) -> {
+                    JsonObject latest = events.stream()
+                            .max(Comparator.comparing(json -> json.get("date").getAsString()))
+                            .orElseThrow();
 
                     weatherMetricsByCommodity.put(commodity, new WeatherMetrics(
-                            readDouble(json, "precipitation"),
-                            readDouble(json, "rootZoneSoilWetness"),
-                            readDouble(json, "temperatureMax"),
-                            readDouble(json, "temperatureMin")
+                            readDouble(latest, "precipitation"),
+                            readDouble(latest, "rootZoneSoilWetness"),
+                            readDouble(latest, "temperatureMax"),
+                            readDouble(latest, "temperatureMin")
                     ));
                 });
 
@@ -56,7 +60,7 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
         return switch (commodityType.toUpperCase()) {
             case "WHEAT" -> "WEAT";
             case "CORN" -> "CORN";
-            case "SOYBEANS", "SOYBEAN", "SOY" -> "SOYB";
+            case "SOYBEANS", "SOYBEAN", "SOY", "SOY_BEANS" -> "SOYB";
             case "COFFEE" -> "JO";
             case "NATURAL_GAS", "NATURAL GAS", "GAS" -> "UNG";
             default -> commodityType.toUpperCase();
