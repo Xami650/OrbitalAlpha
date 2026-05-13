@@ -1,15 +1,17 @@
 package org.ulpgc.dacd.weatherfeeder.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.weatherfeeder.events.WeatherEvent;
-import org.ulpgc.dacd.weatherfeeder.mappers.WeatherEventMapper;
-import org.ulpgc.dacd.weatherfeeder.model.ClimateData;
+import org.ulpgc.dacd.weatherfeeder.controller.feeder.ClimateFeeder;
+import org.ulpgc.dacd.weatherfeeder.controller.publisher.ActiveMqEventPublisher;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo;
-import org.ulpgc.dacd.weatherfeeder.model.feeders.ClimateFeeder;
-import org.ulpgc.dacd.weatherfeeder.publisher.EventPublisher;
+import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,16 +27,18 @@ public class ClimateController {
 
     private final ClimateFeeder feeder;
     private final ProducersInfo producersInfo;
-    private final EventPublisher publisher;
-    private final WeatherEventMapper eventMapper;
+    private final ActiveMqEventPublisher publisher;
     private final Gson gson;
 
-    public ClimateController(ClimateFeeder feeder, ProducersInfo producersInfo, EventPublisher publisher) {
+    public ClimateController(
+            ClimateFeeder feeder,
+            ProducersInfo producersInfo,
+            ActiveMqEventPublisher publisher
+    ) {
         this.feeder = feeder;
         this.producersInfo = producersInfo;
         this.publisher = publisher;
-        this.eventMapper = new WeatherEventMapper();
-        this.gson = new Gson();
+        this.gson = createGson();
     }
 
     public void start() {
@@ -56,6 +60,15 @@ public class ClimateController {
         logger.info("Controlador climático iniciado. Recolección cada {} horas.", COLLECTION_INTERVAL_HOURS);
     }
 
+    private Gson createGson() {
+        return new GsonBuilder()
+                .registerTypeAdapter(
+                        Instant.class,
+                        (JsonSerializer<Instant>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString())
+                )
+                .create();
+    }
+
     private void runCycleSafely() {
         try {
             runCycle();
@@ -67,29 +80,30 @@ public class ClimateController {
     private void runCycle() {
         logger.info("Iniciando ciclo de recolección climática...");
 
-        for (String producerId : producersInfo.getAllIds()) {
-            logger.info("Consultando productor o región {}...", producerId);
-
-            List<ClimateData> climateDataList = feeder.fetch(producerId);
-
-            if (climateDataList.isEmpty()) {
-                logger.warn("No se obtuvieron datos para {}.", producerId);
-            } else {
-                publishEvents(climateDataList);
-            }
-
-            pauseBetweenRequests();
-        }
+        producersInfo.getAllIds()
+                .forEach(this::processProducer);
 
         logger.info("Ciclo climático finalizado.");
     }
 
-    private void publishEvents(List<ClimateData> climateDataList) {
-        for (ClimateData data : climateDataList) {
-            WeatherEvent event = eventMapper.map(data);
-            String json = gson.toJson(event);
-            publisher.publish(WEATHER_TOPIC, json);
+    private void processProducer(String producerId) {
+        logger.info("Consultando productor o región {}...", producerId);
+
+        List<WeatherEvent> weatherEvents = feeder.fetch(producerId);
+
+        if (weatherEvents.isEmpty()) {
+            logger.warn("No se obtuvieron eventos climáticos para {}.", producerId);
+        } else {
+            publishEvents(weatherEvents);
         }
+
+        pauseBetweenRequests();
+    }
+
+    private void publishEvents(List<WeatherEvent> weatherEvents) {
+        weatherEvents.stream()
+                .map(gson::toJson)
+                .forEach(json -> publisher.publish(WEATHER_TOPIC, json));
     }
 
     private void pauseBetweenRequests() {

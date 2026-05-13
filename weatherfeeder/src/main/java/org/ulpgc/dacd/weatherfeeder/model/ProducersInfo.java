@@ -1,15 +1,27 @@
 package org.ulpgc.dacd.weatherfeeder.model;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ProducersInfo {
 
+    private static final String FIELD_SEPARATOR = ";";
+    private static final int EXPECTED_FIELDS = 5;
+
     private final Map<String, Producer> producers;
 
-    public ProducersInfo() {
-        this.producers = createProducers();
+    public ProducersInfo(Path producersFilePath) {
+        this.producers = loadProducers(producersFilePath);
     }
 
     public Producer getById(String id) {
@@ -20,53 +32,115 @@ public class ProducersInfo {
         return List.copyOf(producers.keySet());
     }
 
-    public boolean exists(String id) {
-        return producers.containsKey(id);
+    private Map<String, Producer> loadProducers(Path producersFilePath) {
+        validateFilePath(producersFilePath);
+
+        try {
+            List<String> lines = Files.readAllLines(producersFilePath, StandardCharsets.UTF_8);
+
+            Map<String, Producer> loadedProducers = IntStream.range(0, lines.size())
+                    .mapToObj(index -> new NumberedLine(index + 1, cleanLine(lines.get(index))))
+                    .filter(numberedLine -> !shouldIgnoreLine(numberedLine.content()))
+                    .map(numberedLine -> parseProducer(numberedLine.content(), numberedLine.number()))
+                    .collect(Collectors.toMap(
+                            Producer::id,
+                            Function.identity(),
+                            (existing, duplicated) -> {
+                                throw new IllegalArgumentException("Productor duplicado: " + duplicated.id());
+                            },
+                            LinkedHashMap::new
+                    ));
+
+            if (loadedProducers.isEmpty()) {
+                throw new IllegalArgumentException("El archivo de productores está vacío: " + producersFilePath);
+            }
+
+            return loadedProducers;
+
+        } catch (IOException e) {
+            throw new UncheckedIOException("No se pudo leer el archivo de productores: " + producersFilePath, e);
+        }
     }
 
-    public Map<String, Producer> getAll() {
-        return Map.copyOf(producers);
+    private void validateFilePath(Path producersFilePath) {
+        if (producersFilePath == null) {
+            throw new IllegalArgumentException("La ruta del archivo de productores no puede ser null.");
+        }
+
+        if (!Files.exists(producersFilePath)) {
+            throw new IllegalArgumentException("No existe el archivo de productores: " + producersFilePath);
+        }
+
+        if (!Files.isRegularFile(producersFilePath)) {
+            throw new IllegalArgumentException("La ruta no corresponde a un archivo válido: " + producersFilePath);
+        }
     }
 
-    private Map<String, Producer> createProducers() {
-        Map<String, Producer> map = new LinkedHashMap<>();
+    private String cleanLine(String line) {
+        return line.replace("\uFEFF", "").trim();
+    }
 
-        // WHEAT
-        map.put("WHEAT_1", new Producer("WHEAT_1", "Beauce - France", "WHEAT", 48.10, 1.75));
-        map.put("WHEAT_2", new Producer("WHEAT_2", "Henan - China", "WHEAT", 34.75, 113.62));
-        map.put("WHEAT_3", new Producer("WHEAT_3", "Punjab - India", "WHEAT", 31.15, 75.34));
-        map.put("WHEAT_4", new Producer("WHEAT_4", "Krasnodar Krai - Russia", "WHEAT", 45.04, 38.98));
-        map.put("WHEAT_5", new Producer("WHEAT_5", "Kansas - USA", "WHEAT", 38.50, -98.00));
+    private boolean shouldIgnoreLine(String line) {
+        return line.isBlank() || line.startsWith("#");
+    }
 
-        // CORN
-        map.put("CORN_1", new Producer("CORN_1", "Iowa - USA", "CORN", 42.03, -93.58));
-        map.put("CORN_2", new Producer("CORN_2", "Jilin - China", "CORN", 43.90, 125.32));
-        map.put("CORN_3", new Producer("CORN_3", "Mato Grosso - Brazil", "CORN", -12.64, -55.42));
-        map.put("CORN_4", new Producer("CORN_4", "Cordoba - Argentina", "CORN", -31.42, -64.19));
-        map.put("CORN_5", new Producer("CORN_5", "Baragan Plain - Romania", "CORN", 44.50, 27.50));
+    private Producer parseProducer(String line, int lineNumber) {
+        String[] fields = line.split(Pattern.quote(FIELD_SEPARATOR), -1);
 
-        // SOY BEANS
-        map.put("SOY_1", new Producer("SOY_1", "Mato Grosso - Brazil", "SOY_BEANS", -12.64, -55.42));
-        map.put("SOY_2", new Producer("SOY_2", "Illinois - USA", "SOY_BEANS", 40.00, -89.20));
-        map.put("SOY_3", new Producer("SOY_3", "Cordoba - Argentina", "SOY_BEANS", -31.42, -64.19));
-        map.put("SOY_4", new Producer("SOY_4", "Heilongjiang - China", "SOY_BEANS", 47.86, 127.76));
-        map.put("SOY_5", new Producer("SOY_5", "Alto Parana - Paraguay", "SOY_BEANS", -25.45, -54.90));
+        if (fields.length != EXPECTED_FIELDS) {
+            throw new IllegalArgumentException(
+                    "Formato inválido en línea " + lineNumber +
+                            ". Formato esperado: id;name;commodityType;latitude;longitude"
+            );
+        }
 
-        // COFFEE
-        map.put("COFFEE_1", new Producer("COFFEE_1", "Minas Gerais - Brazil", "COFFEE", -18.51, -44.56));
-        map.put("COFFEE_2", new Producer("COFFEE_2", "Dak Lak - Vietnam", "COFFEE", 12.71, 108.24));
-        map.put("COFFEE_3", new Producer("COFFEE_3", "Antioquia - Colombia", "COFFEE", 6.55, -75.57));
-        map.put("COFFEE_4", new Producer("COFFEE_4", "Lampung - Indonesia", "COFFEE", -4.56, 105.41));
-        map.put("COFFEE_5", new Producer("COFFEE_5", "Oromia - Ethiopia", "COFFEE", 7.55, 40.63));
+        String id = fields[0].trim();
+        String name = fields[1].trim();
+        String commodityType = fields[2].trim();
+        double latitude = parseDouble(fields[3].trim(), "latitude", lineNumber);
+        double longitude = parseDouble(fields[4].trim(), "longitude", lineNumber);
 
-        // NATURAL GAS
-        map.put("NATGAS_1", new Producer("NATGAS_1", "Texas - USA", "NATURAL_GAS", 31.00, -99.00));
-        map.put("NATGAS_2", new Producer("NATGAS_2", "Pennsylvania - USA", "NATURAL_GAS", 41.20, -77.19));
-        map.put("NATGAS_3", new Producer("NATGAS_3", "Louisiana - USA", "NATURAL_GAS", 31.00, -92.00));
-        map.put("NATGAS_4", new Producer("NATGAS_4", "West Virginia - USA", "NATURAL_GAS", 38.60, -80.45));
-        map.put("NATGAS_5", new Producer("NATGAS_5", "Oklahoma - USA", "NATURAL_GAS", 35.59, -97.49));
+        validateRequiredField(id, "id", lineNumber);
+        validateRequiredField(name, "name", lineNumber);
+        validateRequiredField(commodityType, "commodityType", lineNumber);
+        validateCoordinates(latitude, longitude, lineNumber);
 
-        return map;
+        return new Producer(id, name, commodityType, latitude, longitude);
+    }
+
+    private double parseDouble(String value, String fieldName, int lineNumber) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "El campo " + fieldName + " no es un número válido en la línea " + lineNumber + ": " + value,
+                    e
+            );
+        }
+    }
+
+    private void validateRequiredField(String value, String fieldName, int lineNumber) {
+        if (value.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El campo " + fieldName + " no puede estar vacío en la línea " + lineNumber
+            );
+        }
+    }
+
+    private void validateCoordinates(double latitude, double longitude, int lineNumber) {
+        if (latitude < -90 || latitude > 90) {
+            throw new IllegalArgumentException("Latitud fuera de rango en línea " + lineNumber + ": " + latitude);
+        }
+
+        if (longitude < -180 || longitude > 180) {
+            throw new IllegalArgumentException("Longitud fuera de rango en línea " + lineNumber + ": " + longitude);
+        }
+    }
+
+    private record NumberedLine(
+            int number,
+            String content
+    ) {
     }
 
     public record Producer(
