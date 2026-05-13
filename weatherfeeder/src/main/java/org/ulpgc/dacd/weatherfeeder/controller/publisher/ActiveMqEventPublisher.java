@@ -27,7 +27,7 @@ public class ActiveMqEventPublisher {
             this.connection.start();
             this.session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            logger.info("Publisher conectado a ActiveMQ en {}.", BROKER_URL);
+            logger.info("Publisher conectado a ActiveMQ en {}.", broker_url);
 
         } catch (JMSException e) {
             throw new IllegalStateException("No se pudo crear el publisher de ActiveMQ.", e);

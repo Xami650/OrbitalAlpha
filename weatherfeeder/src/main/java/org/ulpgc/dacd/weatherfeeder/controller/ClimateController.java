@@ -6,10 +6,11 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.weatherfeeder.controller.feeders.ClimateFeeder;
+import org.ulpgc.dacd.weatherfeeder.controller.feeder.ClimateFeeder;
 import org.ulpgc.dacd.weatherfeeder.controller.publisher.ActiveMqEventPublisher;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo;
 import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -79,28 +80,30 @@ public class ClimateController {
     private void runCycle() {
         logger.info("Iniciando ciclo de recolección climática...");
 
-        for (String producerId : producersInfo.getAllIds()) {
-            logger.info("Consultando productor o región {}...", producerId);
-
-            List<WeatherEvent> weatherEvents = feeder.fetch(producerId);
-
-            if (weatherEvents.isEmpty()) {
-                logger.warn("No se obtuvieron eventos climáticos para {}.", producerId);
-            } else {
-                publishEvents(weatherEvents);
-            }
-
-            pauseBetweenRequests();
-        }
+        producersInfo.getAllIds()
+                .forEach(this::processProducer);
 
         logger.info("Ciclo climático finalizado.");
     }
 
-    private void publishEvents(List<WeatherEvent> weatherEvents) {
-        for (WeatherEvent event : weatherEvents) {
-            String json = gson.toJson(event);
-            publisher.publish(WEATHER_TOPIC, json);
+    private void processProducer(String producerId) {
+        logger.info("Consultando productor o región {}...", producerId);
+
+        List<WeatherEvent> weatherEvents = feeder.fetch(producerId);
+
+        if (weatherEvents.isEmpty()) {
+            logger.warn("No se obtuvieron eventos climáticos para {}.", producerId);
+        } else {
+            publishEvents(weatherEvents);
         }
+
+        pauseBetweenRequests();
+    }
+
+    private void publishEvents(List<WeatherEvent> weatherEvents) {
+        weatherEvents.stream()
+                .map(gson::toJson)
+                .forEach(json -> publisher.publish(WEATHER_TOPIC, json));
     }
 
     private void pauseBetweenRequests() {

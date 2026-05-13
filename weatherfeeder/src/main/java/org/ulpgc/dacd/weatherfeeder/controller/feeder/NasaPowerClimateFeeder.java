@@ -1,11 +1,11 @@
-package org.ulpgc.dacd.weatherfeeder.controller.feeders;
+package org.ulpgc.dacd.weatherfeeder.controller.feeder;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.weatherfeeder.controller.feeders.parsers.NasaPowerClimateParser;
+import org.ulpgc.dacd.weatherfeeder.controller.feeder.parser.NasaPowerClimateParser;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
 import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
@@ -31,17 +31,18 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
                     "&end=%s" +
                     "&format=JSON";
 
-    private static final int DAYS_TO_FETCH = 30;
     private static final DateTimeFormatter API_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     private final OkHttpClient client;
     private final ProducersInfo producersInfo;
     private final NasaPowerClimateParser parser;
+    private final int weeksToFetch;
 
-    public NasaPowerClimateFeeder(ProducersInfo producersInfo) {
+    public NasaPowerClimateFeeder(ProducersInfo producersInfo, int weeksToFetch) {
         this.client = new OkHttpClient();
         this.producersInfo = producersInfo;
         this.parser = new NasaPowerClimateParser();
+        this.weeksToFetch = validateWeeksToFetch(weeksToFetch);
     }
 
     @Override
@@ -53,12 +54,15 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
             return Collections.emptyList();
         }
 
-        String endDate = LocalDate.now(ZoneOffset.UTC).format(API_DATE_FORMAT);
-        String startDate = LocalDate.now(ZoneOffset.UTC)
-                .minusDays(DAYS_TO_FETCH - 1L)
-                .format(API_DATE_FORMAT);
+        LocalDate endDate = LocalDate.now(ZoneOffset.UTC);
+        LocalDate startDate = calculateStartDate(endDate);
 
-        String url = buildUrl(producer, startDate, endDate);
+        String url = buildUrl(
+                producer,
+                formatDate(startDate),
+                formatDate(endDate)
+        );
+
         Request request = buildRequest(url);
 
         try (Response response = client.newCall(request).execute()) {
@@ -70,6 +74,22 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
             logger.error("Error inesperado procesando {}.", producerId, e);
             return Collections.emptyList();
         }
+    }
+
+    private int validateWeeksToFetch(int weeksToFetch) {
+        if (weeksToFetch <= 0) {
+            throw new IllegalArgumentException("El número de semanas debe ser mayor que 0.");
+        }
+
+        return weeksToFetch;
+    }
+
+    private LocalDate calculateStartDate(LocalDate endDate) {
+        return endDate.minusWeeks(weeksToFetch).plusDays(1);
+    }
+
+    private String formatDate(LocalDate date) {
+        return date.format(API_DATE_FORMAT);
     }
 
     private String buildUrl(Producer producer, String startDate, String endDate) {

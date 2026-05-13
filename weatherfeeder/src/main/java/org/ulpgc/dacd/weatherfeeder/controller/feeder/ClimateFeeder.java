@@ -1,4 +1,4 @@
-package org.ulpgc.dacd.weatherfeeder.controller.feeders;
+package org.ulpgc.dacd.weatherfeeder.controller.feeder;
 
 import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
 
