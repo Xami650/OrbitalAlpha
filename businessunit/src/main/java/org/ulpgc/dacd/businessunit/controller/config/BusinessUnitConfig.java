@@ -11,7 +11,6 @@ public record BusinessUnitConfig(
         String batchDatamartUrl,
         String servingDatamartUrl,
         int apiPort,
-        boolean mlEnabled,
         String mlApiUrl
 ) {
 }

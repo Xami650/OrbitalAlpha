@@ -9,8 +9,9 @@ import org.ulpgc.dacd.businessunit.controller.datamart.BatchDatamart;
 import org.ulpgc.dacd.businessunit.controller.datamart.ServingDatamart;
 import org.ulpgc.dacd.businessunit.controller.datamart.SqliteBatchDatamart;
 import org.ulpgc.dacd.businessunit.controller.datamart.SqliteServingDatamart;
+import org.ulpgc.dacd.businessunit.controller.predictor.FallbackRiskPredictor;
 import org.ulpgc.dacd.businessunit.controller.predictor.HeuristicRiskPredictor;
-import org.ulpgc.dacd.businessunit.controller.predictor.RiskPredictor;
+import org.ulpgc.dacd.businessunit.controller.predictor.MlApiRiskPredictor;
 import org.ulpgc.dacd.businessunit.controller.processor.CommodityPriceEventProcessor;
 import org.ulpgc.dacd.businessunit.controller.processor.WeatherEventProcessor;
 import org.ulpgc.dacd.businessunit.controller.serving.CommodityRiskService;
@@ -32,7 +33,8 @@ public class BusinessUnitMain {
         batchLayer.rebuild();
 
         ServingDatamart servingDatamart = createServingDatamart(config);
-        ServingLayer servingLayer = createServingLayer(batchDatamart, servingDatamart);
+        FallbackRiskPredictor predictor = createPredictor(config);
+        ServingLayer servingLayer = createServingLayer(batchDatamart, servingDatamart, predictor);
         servingLayer.rebuild();
 
         SpeedLayer speedLayer = createSpeedLayer(config, batchLayer, servingLayer);
@@ -41,7 +43,8 @@ public class BusinessUnitMain {
         CommodityRiskService commodityRiskService = new CommodityRiskService(servingDatamart);
         BusinessUnitWebServer webServer = new BusinessUnitWebServer(
                 config.apiPort(),
-                commodityRiskService
+                commodityRiskService,
+                predictor::isUsingFallback
         );
 
         webServer.start();
@@ -68,24 +71,24 @@ public class BusinessUnitMain {
         return servingDatamart;
     }
 
+    private static FallbackRiskPredictor createPredictor(BusinessUnitConfig config) {
+        return new FallbackRiskPredictor(
+                new MlApiRiskPredictor(config.mlApiUrl()),
+                new HeuristicRiskPredictor()
+        );
+    }
+
     private static ServingLayer createServingLayer(
             BatchDatamart batchDatamart,
-            ServingDatamart servingDatamart
+            ServingDatamart servingDatamart,
+            FallbackRiskPredictor predictor
     ) {
-        RiskPredictor riskPredictor = new HeuristicRiskPredictor();
-
-        CommodityPriceEventProcessor commodityPriceEventProcessor =
-                new CommodityPriceEventProcessor();
-
-        WeatherEventProcessor weatherEventProcessor =
-                new WeatherEventProcessor();
-
         return new ServingLayer(
                 batchDatamart,
                 servingDatamart,
-                riskPredictor,
-                commodityPriceEventProcessor,
-                weatherEventProcessor
+                predictor,
+                new CommodityPriceEventProcessor(),
+                new WeatherEventProcessor()
         );
     }
 

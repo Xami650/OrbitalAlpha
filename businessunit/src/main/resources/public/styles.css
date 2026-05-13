@@ -12,6 +12,19 @@ header {
     text-align: center;
 }
 
+.fallback-banner {
+    background: #fef3c7;
+    border-left: 6px solid #f59e0b;
+    color: #92400e;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.hidden {
+    display: none;
+}
+
 main {
     padding: 24px;
 }

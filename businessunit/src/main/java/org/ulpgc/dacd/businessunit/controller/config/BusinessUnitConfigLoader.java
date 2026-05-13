@@ -16,7 +16,6 @@ public class BusinessUnitConfigLoader {
     private static final String BATCH_DATAMART_URL_PROPERTY = "batch.datamart.url";
     private static final String SERVING_DATAMART_URL_PROPERTY = "serving.datamart.url";
     private static final String API_PORT_PROPERTY = "api.port";
-    private static final String ML_ENABLED_PROPERTY = "ml.enabled";
     private static final String ML_API_URL_PROPERTY = "ml.api.url";
 
     private final String configFile;
@@ -36,7 +35,6 @@ public class BusinessUnitConfigLoader {
                 readBatchDatamartUrl(properties),
                 readServingDatamartUrl(properties),
                 readApiPort(properties),
-                readMlEnabled(properties),
                 readMlApiUrl(properties)
         );
     }
@@ -69,10 +67,6 @@ public class BusinessUnitConfigLoader {
 
     private int readApiPort(Properties properties) {
         return readInt(properties, API_PORT_PROPERTY, 7070);
-    }
-
-    private boolean readMlEnabled(Properties properties) {
-        return Boolean.parseBoolean(readRequiredString(properties, ML_ENABLED_PROPERTY));
     }
 
     private String readMlApiUrl(Properties properties) {

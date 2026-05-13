@@ -2,8 +2,11 @@
 *.properties
 *.env.*
 
+*.md
+*.pdf
 .venv/
 __pycache__/
+*.pkl
 
 ### DATABASES
 *.db

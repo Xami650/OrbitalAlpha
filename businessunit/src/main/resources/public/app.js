@@ -1,4 +1,6 @@
 async function loadRisks() {
+    await checkMlStatus();
+
     const response = await fetch("/api/risks");
     const risks = await response.json();
 
@@ -21,6 +23,17 @@ async function loadRisks() {
 
         container.appendChild(card);
     });
+}
+
+async function checkMlStatus() {
+    const banner = document.getElementById("fallback-banner");
+    try {
+        const response = await fetch("/api/status");
+        const status = await response.json();
+        banner.classList.toggle("hidden", status.mlAvailable === true);
+    } catch {
+        banner.classList.remove("hidden");
+    }
 }
 
 function commodityName(symbol) {
