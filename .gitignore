@@ -1,9 +1,15 @@
 
 *.properties
+!businessunit/src/main/resources/businessunit.properties
+!*.example.properties
 *.env.*
 
+*.md
+!README.md
+*.pdf
 .venv/
 __pycache__/
+*.pkl
 
 ### DATABASES
 *.db

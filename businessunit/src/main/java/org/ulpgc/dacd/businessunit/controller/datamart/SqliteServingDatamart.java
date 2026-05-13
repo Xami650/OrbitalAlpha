@@ -27,8 +27,7 @@ public class SqliteServingDatamart implements ServingDatamart {
                     commodity TEXT PRIMARY KEY,
                     risk_level TEXT NOT NULL,
                     risk_score REAL NOT NULL,
-                    reason TEXT NOT NULL,
-                    model_used TEXT NOT NULL
+                    reason TEXT NOT NULL
                 )
                 """;
 
@@ -50,15 +49,13 @@ public class SqliteServingDatamart implements ServingDatamart {
                     commodity,
                     risk_level,
                     risk_score,
-                    reason,
-                    model_used
+                    reason
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?)
                 ON CONFLICT(commodity) DO UPDATE SET
                     risk_level = excluded.risk_level,
                     risk_score = excluded.risk_score,
-                    reason = excluded.reason,
-                    model_used = excluded.model_used
+                    reason = excluded.reason
                 """;
 
         try (Connection connection = DriverManager.getConnection(databaseUrl);
@@ -68,7 +65,6 @@ public class SqliteServingDatamart implements ServingDatamart {
             statement.setString(2, snapshot.riskLevel().name());
             statement.setDouble(3, snapshot.riskScore());
             statement.setString(4, snapshot.reason());
-            statement.setString(5, snapshot.modelUsed());
 
             statement.executeUpdate();
 
@@ -80,7 +76,7 @@ public class SqliteServingDatamart implements ServingDatamart {
     @Override
     public List<CommodityRiskSnapshot> findAllRiskSnapshots() {
         String sql = """
-                SELECT commodity, risk_level, risk_score, reason, model_used
+                SELECT commodity, risk_level, risk_score, reason
                 FROM commodity_risk_snapshots
                 ORDER BY commodity
                 """;
@@ -105,7 +101,7 @@ public class SqliteServingDatamart implements ServingDatamart {
     @Override
     public Optional<CommodityRiskSnapshot> findRiskSnapshotByCommodity(String commodity) {
         String sql = """
-                SELECT commodity, risk_level, risk_score, reason, model_used
+                SELECT commodity, risk_level, risk_score, reason
                 FROM commodity_risk_snapshots
                 WHERE commodity = ?
                 """;
@@ -133,8 +129,7 @@ public class SqliteServingDatamart implements ServingDatamart {
                 resultSet.getString("commodity"),
                 RiskLevel.valueOf(resultSet.getString("risk_level")),
                 resultSet.getDouble("risk_score"),
-                resultSet.getString("reason"),
-                resultSet.getString("model_used")
+                resultSet.getString("reason")
         );
     }
 }

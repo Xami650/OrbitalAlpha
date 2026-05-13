@@ -1,4 +1,13 @@
 package org.ulpgc.dacd.businessunit.model;
 
-public class CommodityMetrics {
+public record CommodityMetrics(
+        String commodity,
+        double latestClosePrice,
+        double previousClosePrice,
+        double priceChangePercent,
+        double precipitation,
+        double rootZoneSoilWetness,
+        double temperatureMax,
+        double temperatureMin
+) {
 }

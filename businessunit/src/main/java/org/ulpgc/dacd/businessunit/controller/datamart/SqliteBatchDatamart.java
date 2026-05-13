@@ -85,7 +85,35 @@ public class SqliteBatchDatamart implements BatchDatamart {
 
     @Override
     public void saveHistoricalEvents(List<HistoricalEvent> events) {
-        events.forEach(this::saveHistoricalEvent);
+        String sql = """
+                INSERT INTO historical_events (
+                    topic,
+                    source_system,
+                    file_date,
+                    raw_json
+                )
+                VALUES (?, ?, ?, ?)
+                """;
+
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            connection.setAutoCommit(false);
+
+            for (HistoricalEvent event : events) {
+                statement.setString(1, event.topic());
+                statement.setString(2, event.sourceSystem());
+                statement.setString(3, event.fileDate());
+                statement.setString(4, event.rawJson());
+                statement.addBatch();
+            }
+
+            statement.executeBatch();
+            connection.commit();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error saving historical events in batch", e);
+        }
     }
 
     @Override
