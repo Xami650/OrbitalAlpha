@@ -36,23 +36,25 @@ public class WeeklyDateChunkerTest {
     }
 
     @Test
-    public void backfillProducesExpectedNumberOfBlocksFor520Days() {
+    public void backfillProducesOneBlockPerWeek() {
         LocalDate today = LocalDate.of(2026, 5, 15);
 
-        List<DateRange> blocks = chunker.backfillWeeks(today, 520);
-
-        assertEquals(74, blocks.size());
+        assertEquals(0, chunker.backfillWeeks(today, 0).size());
+        assertEquals(1, chunker.backfillWeeks(today, 1).size());
+        assertEquals(2, chunker.backfillWeeks(today, 2).size());
+        assertEquals(74, chunker.backfillWeeks(today, 74).size());
+        assertEquals(520, chunker.backfillWeeks(today, 520).size());
     }
 
     @Test
     public void backfillFirstBlockIsCurrentWeekAndMostRecentFirst() {
         LocalDate today = LocalDate.of(2026, 5, 15);
 
-        List<DateRange> blocks = chunker.backfillWeeks(today, 520);
+        List<DateRange> blocks = chunker.backfillWeeks(today, 74);
 
         assertEquals(LocalDate.of(2026, 5, 9), blocks.get(0).start());
         assertEquals(today, blocks.get(0).end());
-        assertTrue("Debe estar ordenado más-reciente → más-antiguo",
+        assertTrue("Debe estar ordenado mas-reciente -> mas-antiguo",
                 blocks.get(0).end().isAfter(blocks.get(1).end()));
     }
 
@@ -60,18 +62,18 @@ public class WeeklyDateChunkerTest {
     public void backfillBlocksAreSevenDaysAndContiguousWithoutOverlap() {
         LocalDate today = LocalDate.of(2026, 5, 15);
 
-        List<DateRange> blocks = chunker.backfillWeeks(today, 520);
+        List<DateRange> blocks = chunker.backfillWeeks(today, 74);
 
         for (int i = 0; i < blocks.size(); i++) {
             DateRange block = blocks.get(i);
-            assertEquals("Bloque " + i + " debe tener 7 días",
+            assertEquals("Bloque " + i + " debe tener 7 dias",
                     6, ChronoUnit.DAYS.between(block.start(), block.end()));
         }
 
         for (int i = 1; i < blocks.size(); i++) {
             DateRange prev = blocks.get(i - 1);
             DateRange curr = blocks.get(i);
-            assertEquals("El bloque anterior debe empezar el día siguiente al fin del actual",
+            assertEquals("El bloque anterior debe empezar el dia siguiente al fin del actual",
                     prev.start(), curr.end().plusDays(1));
         }
     }
@@ -80,7 +82,7 @@ public class WeeklyDateChunkerTest {
     public void backfillLastBlockMatchesExpectedDate() {
         LocalDate today = LocalDate.of(2026, 5, 15);
 
-        List<DateRange> blocks = chunker.backfillWeeks(today, 520);
+        List<DateRange> blocks = chunker.backfillWeeks(today, 74);
         DateRange last = blocks.get(blocks.size() - 1);
 
         assertEquals(LocalDate.of(2024, 11, 21), last.start());
@@ -88,24 +90,13 @@ public class WeeklyDateChunkerTest {
     }
 
     @Test
-    public void backfillDiscardsRemainderSmallerThanSevenDays() {
-        LocalDate today = LocalDate.of(2026, 5, 15);
-
-        assertEquals(0, chunker.backfillWeeks(today, 6).size());
-        assertEquals(1, chunker.backfillWeeks(today, 7).size());
-        assertEquals(1, chunker.backfillWeeks(today, 13).size());
-        assertEquals(2, chunker.backfillWeeks(today, 14).size());
-        assertEquals(2, chunker.backfillWeeks(today, 20).size());
-    }
-
-    @Test
-    public void backfillWithZeroDaysReturnsEmpty() {
+    public void backfillWithZeroWeeksReturnsEmpty() {
         assertEquals(0, chunker.backfillWeeks(LocalDate.of(2026, 5, 15), 0).size());
     }
 
     @Test
     public void backfillBlocksAreAllDistinct() {
-        List<DateRange> blocks = chunker.backfillWeeks(LocalDate.of(2026, 5, 15), 520);
+        List<DateRange> blocks = chunker.backfillWeeks(LocalDate.of(2026, 5, 15), 74);
 
         for (int i = 0; i < blocks.size(); i++) {
             for (int j = i + 1; j < blocks.size(); j++) {
@@ -115,7 +106,7 @@ public class WeeklyDateChunkerTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void negativeBackfillDaysIsRejected() {
+    public void negativeNumWeeksIsRejected() {
         chunker.backfillWeeks(LocalDate.of(2026, 5, 15), -1);
     }
 

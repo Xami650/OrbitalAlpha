@@ -13,7 +13,7 @@ public class ConfigLoaderTest {
     private static Properties validProperties() {
         Properties props = new Properties();
         props.setProperty("weather.mode", "WEEKLY");
-        props.setProperty("weather.backfill.days", "520");
+        props.setProperty("weather.backfill.weeks", "520");
         props.setProperty("weather.producers.file", "config/producers.csv");
         props.setProperty("weather.source.system", "weatherfeeder");
         props.setProperty("broker.url", "tcp://localhost:61616");
@@ -31,7 +31,7 @@ public class ConfigLoaderTest {
         WeatherConfig config = new ConfigLoader(validProperties()).load();
 
         assertEquals(WeatherMode.WEEKLY, config.mode());
-        assertEquals(520, config.backfillDays());
+        assertEquals(520, config.backfillWeeks());
         assertEquals("weatherfeeder", config.sourceSystem());
         assertEquals("tcp://localhost:61616", config.broker().url());
         assertEquals("Weather", config.broker().weatherTopic());
@@ -45,12 +45,12 @@ public class ConfigLoaderTest {
     public void backfillModeIsParsed() {
         Properties props = validProperties();
         props.setProperty("weather.mode", "BACKFILL");
-        props.setProperty("weather.backfill.days", "210");
+        props.setProperty("weather.backfill.weeks", "210");
 
         WeatherConfig config = new ConfigLoader(props).load();
 
         assertEquals(WeatherMode.BACKFILL, config.mode());
-        assertEquals(210, config.backfillDays());
+        assertEquals(210, config.backfillWeeks());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -63,14 +63,14 @@ public class ConfigLoaderTest {
     @Test(expected = IllegalArgumentException.class)
     public void nonPositiveBackfillDaysIsRejected() {
         Properties props = validProperties();
-        props.setProperty("weather.backfill.days", "0");
+        props.setProperty("weather.backfill.weeks", "0");
         new ConfigLoader(props).load();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void nonNumericBackfillDaysIsRejected() {
         Properties props = validProperties();
-        props.setProperty("weather.backfill.days", "abc");
+        props.setProperty("weather.backfill.weeks", "abc");
         new ConfigLoader(props).load();
     }
 

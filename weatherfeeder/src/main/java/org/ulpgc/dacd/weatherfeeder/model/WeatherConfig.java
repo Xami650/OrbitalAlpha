@@ -4,7 +4,7 @@ import java.nio.file.Path;
 
 public record WeatherConfig(
         WeatherMode mode,
-        int backfillDays,
+        int backfillWeeks,
         Path producersFilePath,
         String sourceSystem,
         BrokerConfig broker,
@@ -15,8 +15,8 @@ public record WeatherConfig(
         if (mode == null) {
             throw new IllegalArgumentException("weather.mode no puede ser null.");
         }
-        if (backfillDays <= 0) {
-            throw new IllegalArgumentException("weather.backfill.days debe ser > 0.");
+        if (backfillWeeks <= 0) {
+            throw new IllegalArgumentException("weather.backfill.weeks debe ser > 0.");
         }
         if (producersFilePath == null) {
             throw new IllegalArgumentException("producersFilePath no puede ser null.");

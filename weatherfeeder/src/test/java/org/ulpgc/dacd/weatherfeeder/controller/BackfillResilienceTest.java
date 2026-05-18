@@ -53,8 +53,8 @@ public class BackfillResilienceTest {
         when(producersInfo.getById(PRODUCER_ID)).thenReturn(PRODUCER);
     }
 
-    private WeatherConfig backfillConfig(int days) {
-        return WeatherConfigFixtures.defaults(WeatherMode.BACKFILL, days, Paths.get("dummy"));
+    private WeatherConfig backfillConfig(int weeks) {
+        return WeatherConfigFixtures.defaults(WeatherMode.BACKFILL, weeks, Paths.get("dummy"));
     }
 
     private ClimateController newController(WeatherConfig config) {
@@ -89,7 +89,7 @@ public class BackfillResilienceTest {
                 .thenReturn(sevenValidDays())
                 .thenReturn(sevenValidDays());
 
-        runAndClose(newController(backfillConfig(35)));
+        runAndClose(newController(backfillConfig(5)));
 
         verify(feeder, times(5)).fetch(eq(PRODUCER), any(DateRange.class));
         verify(publisher, times(4)).publish(eq("Weather"), anyString());
@@ -101,7 +101,7 @@ public class BackfillResilienceTest {
         when(feeder.fetch(eq(PRODUCER), any(DateRange.class)))
                 .thenThrow(new RuntimeException("NASA down"));
 
-        runAndClose(newController(backfillConfig(21)));
+        runAndClose(newController(backfillConfig(3)));
 
         verify(feeder, times(3)).fetch(eq(PRODUCER), any(DateRange.class));
         verify(publisher, times(0)).publish(anyString(), anyString());
@@ -112,7 +112,7 @@ public class BackfillResilienceTest {
         when(feeder.fetch(eq(PRODUCER), any(DateRange.class)))
                 .thenReturn(sevenValidDays());
 
-        runAndClose(newController(backfillConfig(21)));
+        runAndClose(newController(backfillConfig(3)));
 
         ArgumentCaptor<DateRange> rangeCaptor = ArgumentCaptor.forClass(DateRange.class);
         verify(feeder, atLeastOnce()).fetch(eq(PRODUCER), rangeCaptor.capture());

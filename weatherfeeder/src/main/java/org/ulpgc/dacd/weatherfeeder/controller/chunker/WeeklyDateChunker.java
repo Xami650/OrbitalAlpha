@@ -22,16 +22,15 @@ public class WeeklyDateChunker {
         return new DateRange(today.minusDays(windowDays - 1L), today);
     }
 
-    public List<DateRange> backfillWeeks(LocalDate today, int backfillDays) {
+    public List<DateRange> backfillWeeks(LocalDate today, int numWeeks) {
         requireNonNullToday(today);
-        if (backfillDays < 0) {
-            throw new IllegalArgumentException("backfillDays no puede ser negativo.");
+        if (numWeeks < 0) {
+            throw new IllegalArgumentException("numWeeks no puede ser negativo.");
         }
 
-        int numBlocks = backfillDays / windowDays;
-        List<DateRange> blocks = new ArrayList<>(numBlocks);
+        List<DateRange> blocks = new ArrayList<>(numWeeks);
 
-        for (int i = 0; i < numBlocks; i++) {
+        for (int i = 0; i < numWeeks; i++) {
             LocalDate end = today.minusDays((long) windowDays * i);
             LocalDate start = end.minusDays(windowDays - 1L);
             blocks.add(new DateRange(start, end));
