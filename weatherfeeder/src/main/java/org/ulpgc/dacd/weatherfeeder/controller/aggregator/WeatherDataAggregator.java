@@ -3,8 +3,8 @@ package org.ulpgc.dacd.weatherfeeder.controller.aggregator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
-import org.ulpgc.dacd.weatherfeeder.model.WeatherAggregate;
-import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
+import org.ulpgc.dacd.weatherfeeder.model.events.WeatherAggregate;
+import org.ulpgc.dacd.weatherfeeder.model.events.WeatherEvent;
 
 import java.time.Instant;
 import java.util.List;
@@ -15,8 +15,19 @@ public class WeatherDataAggregator {
 
     private static final Logger logger = LoggerFactory.getLogger(WeatherDataAggregator.class);
 
-    private static final String SOURCE_SYSTEM = "weatherfeeder";
-    private static final int EXPECTED_DAYS = 7;
+    private final String sourceSystem;
+    private final int expectedDays;
+
+    public WeatherDataAggregator(String sourceSystem, int expectedDays) {
+        if (sourceSystem == null || sourceSystem.isBlank()) {
+            throw new IllegalArgumentException("sourceSystem no puede estar vacio.");
+        }
+        if (expectedDays <= 0) {
+            throw new IllegalArgumentException("expectedDays debe ser > 0.");
+        }
+        this.sourceSystem = sourceSystem;
+        this.expectedDays = expectedDays;
+    }
 
     public Optional<WeatherAggregate> aggregate(
             List<WeatherEvent> events,
@@ -25,7 +36,7 @@ public class WeatherDataAggregator {
             String periodEnd
     ) {
         if (events == null || events.isEmpty()) {
-            logger.warn("Sin eventos válidos para {} en el periodo {}-{}. No se publica agregado.",
+            logger.warn("Sin eventos validos para {} en el periodo {}-{}. No se publica agregado.",
                     producer.id(), periodStart, periodEnd);
             return Optional.empty();
         }
@@ -38,14 +49,14 @@ public class WeatherDataAggregator {
         double avgTMin = averageField(events, WeatherEvent::temperatureMin, "temperatureMin", producer.id());
 
         if (anyNaN(avgPrecip, avgWet, avgTMax, avgTMin)) {
-            logger.warn("No hay días válidos suficientes para calcular todas las medias de {}. Se omite el agregado.",
+            logger.warn("No hay dias validos suficientes para calcular todas las medias de {}. Se omite el agregado.",
                     producer.id());
             return Optional.empty();
         }
 
-        WeatherAggregate aggregate = new WeatherAggregate(
+        return Optional.of(new WeatherAggregate(
                 Instant.now(),
-                SOURCE_SYSTEM,
+                sourceSystem,
                 producer.id(),
                 producer.name(),
                 producer.commodityType(),
@@ -56,15 +67,13 @@ public class WeatherDataAggregator {
                 avgWet,
                 avgTMax,
                 avgTMin
-        );
-
-        return Optional.of(aggregate);
+        ));
     }
 
     private void warnIfIncompleteWindow(int daysUsed, String producerId, String start, String end) {
-        if (daysUsed < EXPECTED_DAYS) {
-            logger.warn("Ventana incompleta para {}: {} días válidos de {} esperados ({}-{}).",
-                    producerId, daysUsed, EXPECTED_DAYS, start, end);
+        if (daysUsed < expectedDays) {
+            logger.warn("Ventana incompleta para {}: {} dias validos de {} esperados ({}-{}).",
+                    producerId, daysUsed, expectedDays, start, end);
         }
     }
 
@@ -79,22 +88,16 @@ public class WeatherDataAggregator {
 
         for (WeatherEvent event : events) {
             double value = extractor.applyAsDouble(event);
-
             if (Double.isNaN(value)) {
-                logger.warn("Valor inválido en {} para {} en {}. Día omitido para esa media.",
+                logger.warn("Valor invalido en {} para {} en {}. Dia omitido para esa media.",
                         fieldName, producerId, event.date());
                 continue;
             }
-
             sum += value;
             count++;
         }
 
-        if (count == 0) {
-            return Double.NaN;
-        }
-
-        return sum / count;
+        return count == 0 ? Double.NaN : sum / count;
     }
 
     private boolean anyNaN(double... values) {

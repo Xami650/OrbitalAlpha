@@ -2,6 +2,9 @@ package org.ulpgc.dacd.weatherfeeder.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ulpgc.dacd.weatherfeeder.model.BrokerConfig;
+import org.ulpgc.dacd.weatherfeeder.model.NasaPowerApiConfig;
+import org.ulpgc.dacd.weatherfeeder.model.ScheduleConfig;
 import org.ulpgc.dacd.weatherfeeder.model.WeatherConfig;
 import org.ulpgc.dacd.weatherfeeder.model.WeatherMode;
 
@@ -17,91 +20,98 @@ public class ConfigLoader {
     private static final Logger logger = LoggerFactory.getLogger(ConfigLoader.class);
 
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
-    private static final Path DEFAULT_PRODUCERS_FILE = Paths.get("config", "producers.csv");
 
     private static final String KEY_MODE = "weather.mode";
     private static final String KEY_BACKFILL_DAYS = "weather.backfill.days";
     private static final String KEY_PRODUCERS_FILE = "weather.producers.file";
+    private static final String KEY_SOURCE_SYSTEM = "weather.source.system";
+    private static final String KEY_BROKER_URL = "broker.url";
+    private static final String KEY_BROKER_TOPIC_WEATHER = "broker.topic.weather";
+    private static final String KEY_NASA_URL_TEMPLATE = "nasa.api.url.template";
+    private static final String KEY_NASA_RATE_LIMIT_PAUSE_MS = "nasa.api.rate.limit.pause.ms";
+    private static final String KEY_COLLECTION_INTERVAL_HOURS = "schedule.collection.interval.hours";
+    private static final String KEY_WINDOW_DAYS = "schedule.window.days";
+    private static final String KEY_EXPECTED_DAYS = "schedule.expected.days";
 
-    private static final String ENV_MODE = "WEATHER_MODE";
-    private static final String ENV_BACKFILL_DAYS = "WEATHER_BACKFILL_DAYS";
-    private static final String ENV_PRODUCERS_FILE = "WEATHER_PRODUCERS_FILE";
-
-    private static final WeatherMode DEFAULT_MODE = WeatherMode.WEEKLY;
-    private static final int DEFAULT_BACKFILL_DAYS = 520;
-
-    private final Properties fileProperties;
-    private final EnvAccessor env;
+    private final Properties properties;
 
     public ConfigLoader() {
-        this(loadFromClasspath(DEFAULT_PROPERTIES_FILE), System::getenv);
+        this(loadFromClasspathOrCwd(DEFAULT_PROPERTIES_FILE));
     }
 
-    public ConfigLoader(Properties fileProperties, EnvAccessor env) {
-        this.fileProperties = fileProperties != null ? fileProperties : new Properties();
-        this.env = env != null ? env : name -> null;
+
+    public ConfigLoader(Properties properties) {
+        this.properties = properties != null ? properties : new Properties();
     }
 
     public WeatherConfig load() {
-        WeatherMode mode = resolveMode();
-        int backfillDays = resolveBackfillDays();
-        Path producersFile = resolveProducersFile();
+        WeatherConfig config = new WeatherConfig(
+                parseMode(),
+                parsePositiveInt(KEY_BACKFILL_DAYS),
+                Paths.get(requireString(KEY_PRODUCERS_FILE)),
+                requireString(KEY_SOURCE_SYSTEM),
+                new BrokerConfig(requireString(KEY_BROKER_URL), requireString(KEY_BROKER_TOPIC_WEATHER)),
+                new NasaPowerApiConfig(requireString(KEY_NASA_URL_TEMPLATE), parseNonNegativeLong(KEY_NASA_RATE_LIMIT_PAUSE_MS)),
+                new ScheduleConfig(
+                        parsePositiveInt(KEY_COLLECTION_INTERVAL_HOURS),
+                        parsePositiveInt(KEY_WINDOW_DAYS),
+                        parsePositiveInt(KEY_EXPECTED_DAYS)
+                )
+        );
 
-        logger.info("Configuración cargada: mode={}, backfillDays={}, producersFile={}",
-                mode, backfillDays, producersFile);
+        logger.info("Configuracion cargada: mode={}, backfillDays={}, producersFile={}",
+                config.mode(), config.backfillDays(), config.producersFilePath());
 
-        return new WeatherConfig(mode, backfillDays, producersFile);
+        return config;
     }
 
-    private WeatherMode resolveMode() {
-        String raw = resolve(ENV_MODE, KEY_MODE);
-        if (raw == null || raw.isBlank()) {
-            return DEFAULT_MODE;
-        }
-
+    private WeatherMode parseMode() {
+        String raw = requireString(KEY_MODE);
         try {
             return WeatherMode.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
-                    "Valor inválido para weather.mode: '" + raw + "'. Valores válidos: WEEKLY, BACKFILL.", e);
+                    "Valor invalido para " + KEY_MODE + ": '" + raw + "'. Valores validos: WEEKLY, BACKFILL.", e);
         }
     }
 
-    private int resolveBackfillDays() {
-        String raw = resolve(ENV_BACKFILL_DAYS, KEY_BACKFILL_DAYS);
-        if (raw == null || raw.isBlank()) {
-            return DEFAULT_BACKFILL_DAYS;
-        }
-
+    private int parsePositiveInt(String key) {
+        String raw = requireString(key);
         try {
-            int parsed = Integer.parseInt(raw.trim());
-            if (parsed <= 0) {
-                throw new IllegalArgumentException("weather.backfill.days debe ser > 0: " + raw);
+            int value = Integer.parseInt(raw.trim());
+            if (value <= 0) {
+                throw new IllegalArgumentException(key + " debe ser > 0: " + raw);
             }
-            return parsed;
+            return value;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("weather.backfill.days no es un entero válido: " + raw, e);
+            throw new IllegalArgumentException(key + " no es un entero valido: " + raw, e);
         }
     }
 
-    private Path resolveProducersFile() {
-        String raw = resolve(ENV_PRODUCERS_FILE, KEY_PRODUCERS_FILE);
-        if (raw == null || raw.isBlank()) {
-            return DEFAULT_PRODUCERS_FILE;
+    private long parseNonNegativeLong(String key) {
+        String raw = requireString(key);
+        try {
+            long value = Long.parseLong(raw.trim());
+            if (value < 0) {
+                throw new IllegalArgumentException(key + " no puede ser negativo: " + raw);
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(key + " no es un entero valido: " + raw, e);
         }
-        return Paths.get(raw.trim());
     }
 
-    private String resolve(String envKey, String propKey) {
-        String envValue = env.get(envKey);
-        if (envValue != null && !envValue.isBlank()) {
-            return envValue;
+    private String requireString(String key) {
+        String value = properties.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Falta la propiedad obligatoria '" + key + "' en " + DEFAULT_PROPERTIES_FILE);
         }
-        return fileProperties.getProperty(propKey);
+        return value.trim();
     }
 
-    private static Properties loadFromClasspath(String resource) {
+    private static Properties loadFromClasspathOrCwd(String resource) {
         Properties props = new Properties();
+
         try (InputStream in = ConfigLoader.class.getClassLoader().getResourceAsStream(resource)) {
             if (in != null) {
                 props.load(in);
@@ -115,15 +125,12 @@ public class ConfigLoader {
         if (Files.exists(cwdFile)) {
             try (InputStream in = Files.newInputStream(cwdFile)) {
                 props.load(in);
+                return props;
             } catch (IOException e) {
                 logger.warn("No se pudo leer {} del cwd.", cwdFile, e);
             }
         }
-        return props;
-    }
 
-    @FunctionalInterface
-    public interface EnvAccessor {
-        String get(String name);
+        throw new IllegalStateException("No se encontro " + resource + " ni en el classpath ni en el cwd.");
     }
 }

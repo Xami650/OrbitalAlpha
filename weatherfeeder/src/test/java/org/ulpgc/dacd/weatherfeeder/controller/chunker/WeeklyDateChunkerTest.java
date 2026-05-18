@@ -19,7 +19,7 @@ public class WeeklyDateChunkerTest {
 
     @Before
     public void setUp() {
-        chunker = new WeeklyDateChunker();
+        chunker = new WeeklyDateChunker(7);
     }
 
     @Test

@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
-import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
+import org.ulpgc.dacd.weatherfeeder.model.events.WeatherEvent;
 
 import java.time.Instant;
 import java.util.Comparator;
@@ -16,8 +16,14 @@ import java.util.Optional;
 public class NasaPowerClimateParser {
 
     private static final Logger logger = LoggerFactory.getLogger(NasaPowerClimateParser.class);
+    private final String sourceSystem;
 
-    private static final String SOURCE_SYSTEM = "weatherfeeder";
+    public NasaPowerClimateParser(String sourceSystem) {
+        if (sourceSystem == null || sourceSystem.isBlank()) {
+            throw new IllegalArgumentException("sourceSystem no puede estar vacio.");
+        }
+        this.sourceSystem = sourceSystem;
+    }
 
     private static final String KEY_PROPERTIES = "properties";
     private static final String KEY_PARAMETER = "parameter";
@@ -30,14 +36,14 @@ public class NasaPowerClimateParser {
     private static final String PARAM_T2M_MAX = "T2M_MAX";
     private static final String PARAM_T2M_MIN = "T2M_MIN";
 
-    public List<WeatherEvent> parse(String jsonResponse, Producer producer, String producerId) {
-        Optional<JsonObject> jsonObject = parseJsonObject(jsonResponse, producerId);
+    public List<WeatherEvent> parse(String jsonResponse, Producer producer) {
+        Optional<JsonObject> jsonObject = parseJsonObject(jsonResponse, producer.id());
 
         if (jsonObject.isEmpty()) {
             return List.of();
         }
 
-        return parseValidJsonObject(jsonObject.get(), producer, producerId);
+        return parseValidJsonObject(jsonObject.get(), producer);
     }
 
     private Optional<JsonObject> parseJsonObject(String jsonResponse, String producerId) {
@@ -49,10 +55,10 @@ public class NasaPowerClimateParser {
         }
     }
 
-    private List<WeatherEvent> parseValidJsonObject(JsonObject jsonObject, Producer producer, String producerId) {
-        logMessagesIfPresent(jsonObject, producerId);
+    private List<WeatherEvent> parseValidJsonObject(JsonObject jsonObject, Producer producer) {
+        logMessagesIfPresent(jsonObject, producer.id());
 
-        Optional<JsonObject> parameterObject = extractParameterObject(jsonObject, producerId);
+        Optional<JsonObject> parameterObject = extractParameterObject(jsonObject, producer.id());
 
         if (parameterObject.isEmpty()) {
             return List.of();
@@ -230,7 +236,7 @@ public class NasaPowerClimateParser {
     ) {
         return new WeatherEvent(
                 capturedAt,
-                SOURCE_SYSTEM,
+                sourceSystem,
                 producer.id(),
                 producer.name(),
                 producer.commodityType(),
