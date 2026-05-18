@@ -2,9 +2,9 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -17,6 +17,11 @@ FEATURE_COLUMNS = [
     "rootZoneSoilWetness",
     "temperatureMax",
     "temperatureMin",
+    "priceVolatility",
+    "priceTrend",
+    "precipitationDelta",
+    "soilWetnessDelta",
+    "temperatureMaxDelta",
 ]
 
 TARGET_COLUMN = "riskLevel"
@@ -38,12 +43,12 @@ def main():
 
     model = Pipeline([
         ("scaler", StandardScaler()),
-        ("classifier", MLPClassifier(
-            hidden_layer_sizes=(16, 8),
-            activation="relu",
-            solver="adam",
-            max_iter=1500,
+        ("classifier", RandomForestClassifier(
+            n_estimators=200,
+            max_depth=12,
+            class_weight="balanced",
             random_state=42,
+            n_jobs=-1,
         )),
     ])
 
@@ -55,10 +60,10 @@ def main():
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, MODEL_PATH)
 
-    _print_results(y_test, y_pred, accuracy, MODEL_PATH)
+    _print_results(y_test, y_pred, accuracy, MODEL_PATH, model)
 
 
-def _print_results(y_test, y_pred, accuracy: float, model_path: Path):
+def _print_results(y_test, y_pred, accuracy: float, model_path: Path, model: Pipeline):
     labels = ["LOW", "MEDIUM", "HIGH"]
     print("\n" + "=" * 50)
     print(f"Accuracy: {accuracy:.2f}")
@@ -70,6 +75,12 @@ def _print_results(y_test, y_pred, accuracy: float, model_path: Path):
     print(header)
     for label, row in zip(labels, matrix):
         print(f"{label:>8}" + "".join(f"{val:>8}" for val in row))
+
+    importances = model.named_steps["classifier"].feature_importances_
+    print("\nFeature importances:")
+    for name, importance in sorted(zip(FEATURE_COLUMNS, importances), key=lambda x: x[1], reverse=True):
+        print(f"  {name:<25} {importance:.4f}")
+
     print("=" * 50)
     print(f"Model saved at: {model_path}\n")
 

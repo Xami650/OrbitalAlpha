@@ -2,20 +2,16 @@
 Generates training_dataset.csv from businessunit_batch.db.
 
 Strategy:
-  - Price changes (priceChangePercent) are computed from the full 10-year
-    weekly price history stored in the batch datamart. All values are real.
-  - Weather metrics are summarised into three representative scenarios per
-    commodity (LOW, MID, HIGH adverse conditions) derived from the actual
-    weather readings using the P10, P50 and P90 percentiles of each metric.
-    This ensures the dataset covers the full range of conditions that the
-    deployed system actually observes.
-  - Each combination of price change × weather scenario produces one row.
-  - Risk labels are assigned using the same domain rules as
-    HeuristicRiskPredictor (bootstrap labeling, no human ground truth).
-
-Note: once weatherfeeder's historical improvement is deployed (520-week
-lookback), re-running this script will automatically produce a richer
-dataset that incorporates real extreme weather events.
+  - Price features (priceChangePercent, priceVolatility, priceTrend) are
+    computed from the weekly price history stored in the batch datamart using
+    a sliding window of LOOKBACK_WINDOW weeks.
+  - Weather metrics are summarised into three representative scenarios
+    (adverse, moderate, benign) derived from the actual weather readings.
+    Each scenario also includes delta features (precipitationDelta,
+    soilWetnessDelta, temperatureMaxDelta) representing the deviation from
+    the historical mean.
+  - Each combination of price feature set x weather scenario produces one row.
+  - Risk labels are assigned using domain heuristic rules (bootstrap labeling).
 
 Usage:
     python generate_dataset.py
@@ -33,6 +29,7 @@ import numpy as np
 
 OUTPUT_PATH = Path("data/training_dataset.csv")
 DEFAULT_DB_PATH = Path("../businessunit_batch.db")
+LOOKBACK_WINDOW = 8
 
 COMMODITY_TYPE_TO_SYMBOL = {
     "WHEAT": "WEAT",
@@ -62,22 +59,22 @@ def main():
     events = _load_events(db_path)
     print(f"Loaded {len(events)} historical events")
 
-    price_changes = _extract_price_changes(events)
+    price_features = _extract_price_features(events)
     weather_scenarios = _extract_weather_scenarios(events)
 
-    if not price_changes:
+    if not price_features:
         raise ValueError("No price data found. Run businessunit first to populate the batch datamart.")
 
     if not weather_scenarios:
         raise ValueError("No weather data found. Run businessunit first to populate the batch datamart.")
 
-    rows = _build_dataset_rows(price_changes, weather_scenarios)
+    rows = _build_dataset_rows(price_features, weather_scenarios)
     df = pd.DataFrame(rows)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False)
 
-    print(f"Dataset generated: {len(df)} rows → {output_path}")
+    print(f"Dataset generated: {len(df)} rows -> {output_path}")
     print(df["riskLevel"].value_counts().to_string())
 
 
@@ -94,10 +91,11 @@ def _load_events(db_path: Path) -> list[dict]:
         return [{"topic": row[0], "raw_json": row[1]} for row in cursor.fetchall()]
 
 
-def _extract_price_changes(events: list[dict]) -> list[float]:
+def _extract_price_features(events: list[dict]) -> list[dict]:
     """
-    Computes all weekly priceChangePercent values across all commodities.
-    Deduplicates by (symbol, date) to avoid repeats from multiple feeder runs.
+    Computes price features with temporal context for each week per commodity.
+    Returns a list of dicts with: priceChangePercent, priceVolatility, priceTrend.
+    Uses a sliding window of LOOKBACK_WINDOW weeks for volatility and trend.
     """
     latest_by_key: dict[tuple, float] = {}
 
@@ -122,23 +120,41 @@ def _extract_price_changes(events: list[dict]) -> list[float]:
     for (symbol, date), close in latest_by_key.items():
         by_symbol.setdefault(symbol, []).append((date, close))
 
-    changes = []
+    features = []
     for entries in by_symbol.values():
         entries.sort(key=lambda e: e[0])
+
+        changes = []
         for i in range(1, len(entries)):
             prev = entries[i - 1][1]
             curr = entries[i][1]
             if prev != 0.0:
                 changes.append(round((curr - prev) / prev * 100.0, 4))
 
-    return changes
+        for i, change in enumerate(changes):
+            window = changes[max(0, i - LOOKBACK_WINDOW + 1): i + 1]
+
+            if len(window) >= 2:
+                volatility = round(float(np.std(window)), 4)
+                trend = round(float(np.mean(window)), 4)
+            else:
+                volatility = 0.0
+                trend = change
+
+            features.append({
+                "priceChangePercent": change,
+                "priceVolatility": volatility,
+                "priceTrend": trend,
+            })
+
+    return features
 
 
 def _extract_weather_scenarios(events: list[dict]) -> list[dict]:
     """
-    Returns three representative weather scenarios derived from all available
-    weather readings: P10 (adverse), P50 (moderate), P90 (benign) for each
-    metric, combined to form three distinct conditions.
+    Returns three representative weather scenarios with delta features.
+    Each scenario includes the base metrics plus deltas representing
+    the deviation from the historical mean.
     """
     readings = []
 
@@ -175,21 +191,18 @@ def _extract_weather_scenarios(events: list[dict]) -> list[dict]:
 
     df = pd.DataFrame(readings)
     p50 = df[WEATHER_METRICS].quantile(0.50)
+    mean = df[WEATHER_METRICS].mean()
 
     actual_min = df[WEATHER_METRICS].min()
     actual_max = df[WEATHER_METRICS].max()
 
-    # Adverse: actual extreme values that stress-test the heuristic thresholds.
-    # Uses real observed minimums/maximums, not synthetic values.
     adverse = {
         "precipitation": round(float(actual_min["precipitation"]), 4),
         "rootZoneSoilWetness": round(float(actual_min["rootZoneSoilWetness"]), 4),
         "temperatureMax": round(float(actual_max["temperatureMax"]), 4),
         "temperatureMin": round(float(actual_min["temperatureMin"]), 4),
     }
-    # Moderate: median values
     moderate = {metric: round(float(p50[metric]), 4) for metric in WEATHER_METRICS}
-    # Benign: high precipitation, high soil wetness, low tempMax, high tempMin
     benign = {
         "precipitation": round(float(actual_max["precipitation"]), 4),
         "rootZoneSoilWetness": round(float(actual_max["rootZoneSoilWetness"]), 4),
@@ -197,14 +210,21 @@ def _extract_weather_scenarios(events: list[dict]) -> list[dict]:
         "temperatureMin": round(float(actual_max["temperatureMin"]), 4),
     }
 
-    return [adverse, moderate, benign]
+    scenarios = []
+    for scenario in [adverse, moderate, benign]:
+        scenario["precipitationDelta"] = round(scenario["precipitation"] - float(mean["precipitation"]), 4)
+        scenario["soilWetnessDelta"] = round(scenario["rootZoneSoilWetness"] - float(mean["rootZoneSoilWetness"]), 4)
+        scenario["temperatureMaxDelta"] = round(scenario["temperatureMax"] - float(mean["temperatureMax"]), 4)
+        scenarios.append(scenario)
+
+    return scenarios
 
 
-def _build_dataset_rows(price_changes: list[float], weather_scenarios: list[dict]) -> list[dict]:
+def _build_dataset_rows(price_features: list[dict], weather_scenarios: list[dict]) -> list[dict]:
     rows = []
-    for change in price_changes:
+    for price in price_features:
         for weather in weather_scenarios:
-            row = {"priceChangePercent": change, **weather}
+            row = {**price, **weather}
             row["riskLevel"] = _assign_risk_level(row)
             rows.append(row)
     return rows
@@ -229,6 +249,21 @@ def _assign_risk_level(row: dict) -> str:
 
     if row["temperatureMin"] < 3:
         score += 15
+
+    if row["priceVolatility"] > 4:
+        score += 10
+
+    if row["priceTrend"] > 3:
+        score += 10
+
+    if row["precipitationDelta"] < -2:
+        score += 5
+
+    if row["soilWetnessDelta"] < -0.15:
+        score += 5
+
+    if row["temperatureMaxDelta"] > 5:
+        score += 5
 
     if score >= 70:
         return "HIGH"

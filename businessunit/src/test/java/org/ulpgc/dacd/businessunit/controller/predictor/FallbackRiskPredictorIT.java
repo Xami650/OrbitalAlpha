@@ -2,6 +2,8 @@ package org.ulpgc.dacd.businessunit.controller.predictor;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.model.CommodityMetrics;
 import org.ulpgc.dacd.businessunit.model.CommodityRiskSnapshot;
 import org.ulpgc.dacd.businessunit.model.RiskLevel;
@@ -16,8 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FallbackRiskPredictorIT {
 
+    private static final Logger logger = LoggerFactory.getLogger(FallbackRiskPredictorIT.class);
+
     private static final CommodityMetrics WEAT_METRICS = new CommodityMetrics(
-            "WEAT", 5.80, 5.43, 6.8, 0.2, 0.28, 34.0, 18.0
+            "WEAT", 5.80, 5.43, 6.8, 0.2, 0.28, 34.0, 18.0,
+            3.5, 1.2, -1.5, -0.1, 4.0
     );
 
     @Test
@@ -34,7 +39,7 @@ class FallbackRiskPredictorIT {
         assertThat(result.riskLevel()).isIn(RiskLevel.LOW, RiskLevel.MEDIUM, RiskLevel.HIGH);
         assertThat(result.riskScore()).isGreaterThanOrEqualTo(0.0);
         assertThat(result.reason()).isNotBlank();
-        System.out.println("[FALLBACK] " + result.riskLevel() + " / score=" + result.riskScore() + " / " + result.reason());
+        logger.info("[FALLBACK] {} / score={} / {}", result.riskLevel(), result.riskScore(), result.reason());
     }
 
     @Test
@@ -52,7 +57,7 @@ class FallbackRiskPredictorIT {
         assertThat(result.riskLevel()).isIn(RiskLevel.LOW, RiskLevel.MEDIUM, RiskLevel.HIGH);
         assertThat(result.riskScore()).isGreaterThanOrEqualTo(0.0);
         assertThat(result.reason()).isNotBlank();
-        System.out.println("[ML]       " + result.riskLevel() + " / score=" + result.riskScore() + " / " + result.reason());
+        logger.info("[ML] {} / score={} / {}", result.riskLevel(), result.riskScore(), result.reason());
     }
 
     static boolean isMlApiAvailable() {

@@ -2,12 +2,16 @@ package org.ulpgc.dacd.businessunit.view;
 
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.controller.serving.CommodityRiskService;
 
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 public class BusinessUnitWebServer {
+
+    private static final Logger logger = LoggerFactory.getLogger(BusinessUnitWebServer.class);
 
     private final int port;
     private final CommodityRiskService commodityRiskService;
@@ -46,11 +50,13 @@ public class BusinessUnitWebServer {
         });
 
         app.start(port);
+        logger.info("Web server started on port {}", port);
     }
 
     public void stop() {
         if (app != null) {
             app.stop();
+            logger.info("Web server stopped");
         }
     }
 }

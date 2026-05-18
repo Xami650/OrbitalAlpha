@@ -64,7 +64,12 @@ public class ServingLayer {
                     weatherMetrics.precipitation(),
                     weatherMetrics.rootZoneSoilWetness(),
                     weatherMetrics.temperatureMax(),
-                    weatherMetrics.temperatureMin()
+                    weatherMetrics.temperatureMin(),
+                    priceMetrics.priceVolatility(),
+                    priceMetrics.priceTrend(),
+                    weatherMetrics.precipitationDelta(),
+                    weatherMetrics.soilWetnessDelta(),
+                    weatherMetrics.temperatureMaxDelta()
             );
 
             CommodityRiskSnapshot snapshot = riskPredictor.predict(metrics);

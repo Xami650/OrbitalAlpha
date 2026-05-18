@@ -1,5 +1,7 @@
 package org.ulpgc.dacd.businessunit.controller.batch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
 import java.io.IOException;
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class FileEventStoreReader implements EventStoreReader {
+
+    private static final Logger logger = LoggerFactory.getLogger(FileEventStoreReader.class);
 
     private static final String EVENT_FILE_EXTENSION = ".events";
 
@@ -21,17 +25,21 @@ public class FileEventStoreReader implements EventStoreReader {
     @Override
     public List<HistoricalEvent> readAllEvents() {
         if (!Files.exists(eventStorePath)) {
+            logger.warn("Event store path does not exist: {}", eventStorePath);
             return List.of();
         }
 
         try (Stream<Path> paths = Files.walk(eventStorePath)) {
-            return paths
+            List<HistoricalEvent> events = paths
                     .filter(Files::isRegularFile)
                     .filter(this::isEventFile)
                     .flatMap(this::readEventsFromFile)
                     .toList();
+            logger.info("Read {} historical events from {}", events.size(), eventStorePath);
+            return events;
 
         } catch (IOException e) {
+            logger.error("Error reading event store from {}", eventStorePath, e);
             throw new RuntimeException("Error reading event store from " + eventStorePath, e);
         }
     }

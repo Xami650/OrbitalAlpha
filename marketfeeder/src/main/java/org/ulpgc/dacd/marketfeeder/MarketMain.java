@@ -2,6 +2,8 @@ package org.ulpgc.dacd.marketfeeder;
 
 import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.marketfeeder.config.MarketFeederConfig;
 import org.ulpgc.dacd.marketfeeder.config.MarketFeederConfigLoader;
 import org.ulpgc.dacd.marketfeeder.controller.MarketController;
@@ -14,11 +16,14 @@ import org.ulpgc.dacd.marketfeeder.controller.publisher.ActiveMqEventPublisher;
 @SuppressWarnings("UnnecessaryModifier")
 public class MarketMain {
 
+    private static final Logger logger = LoggerFactory.getLogger(MarketMain.class);
     private static final String CONFIG_FILE = "marketfeeder.properties";
 
-    public static void main() {
+    public static void main(String[] args) {
+        logger.info("Starting MarketFeeder...");
         MarketFeederConfig config =
                 new MarketFeederConfigLoader(CONFIG_FILE).load();
+        logger.info("Configuration loaded. Symbols: {}", config.symbols());
 
         MarketController controller = createController(config);
         controller.start();

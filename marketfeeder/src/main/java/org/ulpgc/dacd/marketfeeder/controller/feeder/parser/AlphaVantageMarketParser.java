@@ -2,6 +2,8 @@ package org.ulpgc.dacd.marketfeeder.controller.feeder.parser;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.marketfeeder.model.MarketEvent;
 
 import java.time.Instant;
@@ -11,6 +13,8 @@ import java.util.List;
 
 
 public class AlphaVantageMarketParser implements MarketParser {
+
+    private static final Logger logger = LoggerFactory.getLogger(AlphaVantageMarketParser.class);
 
     private final int maxWeeks;
     private static final String SOURCE_SYSTEM = "AlphaVantage";
@@ -25,9 +29,11 @@ public class AlphaVantageMarketParser implements MarketParser {
         JsonObject root = JsonParser.parseString(rawResponse).getAsJsonObject();
 
         if (root.has("Error Message")) {
+            logger.error("API error for {}: {}", symbol, root.get("Error Message").getAsString());
             throw new RuntimeException(root.get("Error Message").getAsString());
         }
         if (root.has("Note")) {
+            logger.warn("API rate limit note for {}: {}", symbol, root.get("Note").getAsString());
             throw new RuntimeException(root.get("Note").getAsString());
         }
 

@@ -69,6 +69,10 @@ eventstore/
 ### VS Code
 .vscode/
 
+### LOGS
+logs/
+*.log
+
 ### OS FILES
 .DS_Store
 Thumbs.db

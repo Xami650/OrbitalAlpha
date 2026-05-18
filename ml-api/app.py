@@ -12,6 +12,11 @@ FEATURE_COLUMNS = [
     "rootZoneSoilWetness",
     "temperatureMax",
     "temperatureMin",
+    "priceVolatility",
+    "priceTrend",
+    "precipitationDelta",
+    "soilWetnessDelta",
+    "temperatureMaxDelta",
 ]
 
 app = FastAPI(title="Commodity Risk ML API")
@@ -26,6 +31,11 @@ class PredictionRequest(BaseModel):
     rootZoneSoilWetness: float
     temperatureMax: float
     temperatureMin: float
+    priceVolatility: float
+    priceTrend: float
+    precipitationDelta: float
+    soilWetnessDelta: float
+    temperatureMaxDelta: float
 
 
 class PredictionResponse(BaseModel):
@@ -75,14 +85,29 @@ def _build_reason(request: PredictionRequest, risk_level: str) -> str:
     elif request.priceChangePercent > 2:
         reasons.append("moderate price increase")
 
+    if request.priceVolatility > 4:
+        reasons.append("high price volatility")
+
+    if request.priceTrend > 3:
+        reasons.append("sustained upward price trend")
+
     if request.precipitation < 1:
         reasons.append("low precipitation")
+
+    if request.precipitationDelta < -2:
+        reasons.append("precipitation below recent average")
 
     if 0 < request.rootZoneSoilWetness < 0.35:
         reasons.append("low root-zone soil wetness")
 
+    if request.soilWetnessDelta < -0.15:
+        reasons.append("soil wetness below recent average")
+
     if request.temperatureMax > 32:
         reasons.append("high maximum temperature")
+
+    if request.temperatureMaxDelta > 5:
+        reasons.append("temperature above recent average")
 
     if request.temperatureMin < 3:
         reasons.append("low minimum temperature")

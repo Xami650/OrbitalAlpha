@@ -1,7 +1,6 @@
 package org.ulpgc.dacd.businessunit.controller.speed;
 
 import jakarta.jms.Connection;
-import jakarta.jms.ConnectionFactory;
 import jakarta.jms.MessageConsumer;
 import jakarta.jms.Session;
 import jakarta.jms.TextMessage;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ActiveMqEventSubscriber implements EventSubscriber {
 
@@ -32,7 +32,8 @@ public class ActiveMqEventSubscriber implements EventSubscriber {
     @Override
     public void subscribe(EventMessageHandler handler) {
         try {
-            ConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
+            ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
+            factory.setTrustedPackages(List.of("org.ulpgc.dacd", "java.lang", "java.util"));
 
             connection = factory.createConnection();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

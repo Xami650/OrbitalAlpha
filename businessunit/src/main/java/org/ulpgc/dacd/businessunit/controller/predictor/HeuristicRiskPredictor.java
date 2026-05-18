@@ -44,6 +44,26 @@ public class HeuristicRiskPredictor implements RiskPredictor {
             score += 15;
         }
 
+        if (metrics.priceVolatility() > 4) {
+            score += 10;
+        }
+
+        if (metrics.priceTrend() > 3) {
+            score += 10;
+        }
+
+        if (metrics.precipitationDelta() < -2) {
+            score += 5;
+        }
+
+        if (metrics.soilWetnessDelta() < -0.15) {
+            score += 5;
+        }
+
+        if (metrics.temperatureMaxDelta() > 5) {
+            score += 5;
+        }
+
         return Math.min(score, 100.0);
     }
 

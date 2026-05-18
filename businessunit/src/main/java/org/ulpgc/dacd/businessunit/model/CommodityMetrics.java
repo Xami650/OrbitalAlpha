@@ -8,6 +8,11 @@ public record CommodityMetrics(
         double precipitation,
         double rootZoneSoilWetness,
         double temperatureMax,
-        double temperatureMin
+        double temperatureMin,
+        double priceVolatility,
+        double priceTrend,
+        double precipitationDelta,
+        double soilWetnessDelta,
+        double temperatureMaxDelta
 ) {
 }
