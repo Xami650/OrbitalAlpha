@@ -88,7 +88,7 @@ public class ClimateController implements AutoCloseable {
     }
 
     private void runBackfillSafely() {
-        logger.info("Modo BACKFILL iniciado para {} dias.", config.backfillDays());
+        logger.info("Modo BACKFILL iniciado para {} semanas.", config.backfillWeeks());
         try {
             runBackfill();
             logger.info("Backfill completado correctamente.");
@@ -113,7 +113,7 @@ public class ClimateController implements AutoCloseable {
     }
 
     private void runBackfill() {
-        List<DateRange> chunks = chunker.backfillWeeks(LocalDate.now(clock), config.backfillDays());
+        List<DateRange> chunks = chunker.backfillWeeks(LocalDate.now(clock), config.backfillWeeks());
         logger.info("Backfill: {} bloques de {} dias por productor.", chunks.size(), config.schedule().windowDays());
 
         forEachProducer(producer -> {

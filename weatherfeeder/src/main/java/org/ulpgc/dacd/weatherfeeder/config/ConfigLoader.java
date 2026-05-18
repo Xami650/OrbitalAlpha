@@ -22,7 +22,7 @@ public class ConfigLoader {
     private static final String DEFAULT_PROPERTIES_FILE = "application.properties";
 
     private static final String KEY_MODE = "weather.mode";
-    private static final String KEY_BACKFILL_DAYS = "weather.backfill.days";
+    private static final String KEY_BACKFILL_WEEKS = "weather.backfill.weeks";
     private static final String KEY_PRODUCERS_FILE = "weather.producers.file";
     private static final String KEY_SOURCE_SYSTEM = "weather.source.system";
     private static final String KEY_BROKER_URL = "broker.url";
@@ -47,7 +47,7 @@ public class ConfigLoader {
     public WeatherConfig load() {
         WeatherConfig config = new WeatherConfig(
                 parseMode(),
-                parsePositiveInt(KEY_BACKFILL_DAYS),
+                parsePositiveInt(KEY_BACKFILL_WEEKS),
                 Paths.get(requireString(KEY_PRODUCERS_FILE)),
                 requireString(KEY_SOURCE_SYSTEM),
                 new BrokerConfig(requireString(KEY_BROKER_URL), requireString(KEY_BROKER_TOPIC_WEATHER)),
@@ -59,8 +59,8 @@ public class ConfigLoader {
                 )
         );
 
-        logger.info("Configuracion cargada: mode={}, backfillDays={}, producersFile={}",
-                config.mode(), config.backfillDays(), config.producersFilePath());
+        logger.info("Configuracion cargada: mode={}, backfillWeeks={}, producersFile={}",
+                config.mode(), config.backfillWeeks(), config.producersFilePath());
 
         return config;
     }

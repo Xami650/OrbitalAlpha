@@ -19,10 +19,10 @@ public final class WeatherConfigFixtures {
     private WeatherConfigFixtures() {
     }
 
-    public static WeatherConfig defaults(WeatherMode mode, int backfillDays, Path producersFilePath) {
+    public static WeatherConfig defaults(WeatherMode mode, int backfillWeeks, Path producersFilePath) {
         return new WeatherConfig(
                 mode,
-                backfillDays,
+                backfillWeeks,
                 producersFilePath,
                 "weatherfeeder",
                 new BrokerConfig("tcp://localhost:61616", "Weather"),
@@ -31,7 +31,7 @@ public final class WeatherConfigFixtures {
         );
     }
 
-    public static WeatherConfig defaults(WeatherMode mode, int backfillDays, String producersFilePath) {
-        return defaults(mode, backfillDays, Paths.get(producersFilePath));
+    public static WeatherConfig defaults(WeatherMode mode, int backfillWeeks, String producersFilePath) {
+        return defaults(mode, backfillWeeks, Paths.get(producersFilePath));
     }
 }
