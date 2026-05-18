@@ -1,6 +1,7 @@
 
 *.properties
 !businessunit/src/main/resources/businessunit.properties
+!weatherfeeder/src/main/resources/application.properties
 !*.example.properties
 *.env.*
 

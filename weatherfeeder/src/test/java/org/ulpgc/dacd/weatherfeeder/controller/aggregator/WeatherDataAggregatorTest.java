@@ -4,8 +4,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ulpgc.dacd.weatherfeeder.controller.feeder.parser.NasaPowerClimateParser;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
-import org.ulpgc.dacd.weatherfeeder.model.WeatherAggregate;
-import org.ulpgc.dacd.weatherfeeder.model.WeatherEvent;
+import org.ulpgc.dacd.weatherfeeder.model.events.WeatherAggregate;
+import org.ulpgc.dacd.weatherfeeder.model.events.WeatherEvent;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,8 +26,8 @@ public class WeatherDataAggregatorTest {
 
     @Before
     public void setUp() {
-        aggregator = new WeatherDataAggregator();
-        parser = new NasaPowerClimateParser();
+        aggregator = new WeatherDataAggregator("weatherfeeder", 7);
+        parser = new NasaPowerClimateParser("weatherfeeder");
         producer = new Producer("GC-01", "Gran Canaria Sur", "TOMATO", 27.9, -15.6);
     }
 
@@ -41,7 +41,7 @@ public class WeatherDataAggregatorTest {
                 -999.0
         );
 
-        List<WeatherEvent> events = parser.parse(json, producer, producer.id());
+        List<WeatherEvent> events = parser.parse(json, producer);
         assertEquals(7, events.size());
 
         Optional<WeatherAggregate> result = aggregator.aggregate(events, producer, PERIOD_START, PERIOD_END);
@@ -68,7 +68,7 @@ public class WeatherDataAggregatorTest {
                 -999.0
         );
 
-        List<WeatherEvent> events = parser.parse(json, producer, producer.id());
+        List<WeatherEvent> events = parser.parse(json, producer);
         assertEquals(6, events.size());
 
         Optional<WeatherAggregate> result = aggregator.aggregate(events, producer, PERIOD_START, PERIOD_END);
