@@ -1,10 +1,16 @@
 package org.ulpgc.dacd.businessunit.controller.speed;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.businessunit.controller.batch.BatchLayer;
+import org.ulpgc.dacd.businessunit.controller.batch.BatchDatamart;
 import org.ulpgc.dacd.businessunit.controller.serving.ServingLayer;
+import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -15,9 +21,11 @@ public class SpeedLayer {
 
     private static final Logger logger = LoggerFactory.getLogger(SpeedLayer.class);
     private static final long DEBOUNCE_DELAY_SECONDS = 5;
+    private static final DateTimeFormatter DATE_FORMAT =
+            DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
 
     private final EventSubscriber eventSubscriber;
-    private final BatchLayer batchLayer;
+    private final BatchDatamart batchDatamart;
     private final ServingLayer servingLayer;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -26,11 +34,11 @@ public class SpeedLayer {
 
     public SpeedLayer(
             EventSubscriber eventSubscriber,
-            BatchLayer batchLayer,
+            BatchDatamart batchDatamart,
             ServingLayer servingLayer
     ) {
         this.eventSubscriber = eventSubscriber;
-        this.batchLayer = batchLayer;
+        this.batchDatamart = batchDatamart;
         this.servingLayer = servingLayer;
     }
 
@@ -42,22 +50,36 @@ public class SpeedLayer {
     private synchronized void processEvent(String topic, String jsonEvent) {
         logger.info("Speed layer received event from topic {}", topic);
 
+        try {
+            HistoricalEvent event = toHistoricalEvent(topic, jsonEvent);
+            batchDatamart.saveHistoricalEvent(event);
+        } catch (Exception e) {
+            logger.error("Failed to ingest real-time event into batch datamart", e);
+        }
+
         if (pendingRebuild != null) {
             pendingRebuild.cancel(false);
         }
 
-        pendingRebuild = scheduler.schedule(this::debouncedRebuild, DEBOUNCE_DELAY_SECONDS, TimeUnit.SECONDS);
+        pendingRebuild = scheduler.schedule(this::debouncedServingRebuild, DEBOUNCE_DELAY_SECONDS, TimeUnit.SECONDS);
     }
 
-    private void debouncedRebuild() {
+    private HistoricalEvent toHistoricalEvent(String topic, String jsonEvent) {
+        JsonObject json = JsonParser.parseString(jsonEvent).getAsJsonObject();
+        String ss = json.get("ss").getAsString();
+        String ts = json.get("ts").getAsString();
+        String fileDate = DATE_FORMAT.format(Instant.parse(ts));
+        return new HistoricalEvent(topic, ss, fileDate, jsonEvent);
+    }
+
+    private void debouncedServingRebuild() {
         if (!rebuildInProgress.compareAndSet(false, true)) {
-            logger.info("Rebuild already in progress, skipping");
+            logger.info("Serving rebuild already in progress, skipping");
             return;
         }
 
         try {
-            logger.info("Debounced rebuild triggered");
-            batchLayer.rebuild();
+            logger.info("Debounced serving layer rebuild triggered");
             servingLayer.rebuild();
         } finally {
             rebuildInProgress.set(false);

@@ -2,25 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Commodity Risk Index</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrbitalAlpha — Commodity Risk Dashboard</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header>
-    <h1>Commodity Risk Calculator</h1>
-</header>
 
-<div id="fallback-banner" class="fallback-banner hidden">
-    &#9888; Warning: ML API unavailable. Showing heuristic fallback predictions with lower reliability.
+<div class="app">
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-orbit">
+                    <div class="logo-core"></div>
+                    <div class="logo-ring"></div>
+                </div>
+                <div class="logo-text">
+                    <h1>OrbitalAlpha</h1>
+                    <span class="logo-subtitle">Commodity Buy Risk Intelligence</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-group">
+                <div id="api-status" class="status-chip status-loading">
+                    <span class="status-dot"></span>
+                    <span class="status-label">API</span>
+                </div>
+                <div id="ml-status" class="status-chip status-loading">
+                    <span class="status-dot"></span>
+                    <span class="status-label">ML Model</span>
+                </div>
+            </div>
+            <button id="refresh-btn" class="btn-refresh" onclick="refreshDashboard()">
+                <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="alert-banner" class="alert-banner hidden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span id="alert-text"></span>
+    </div>
+
+    <main class="main">
+        <section class="summary-bar" id="summary-bar">
+            <div class="summary-card">
+                <span class="summary-value" id="total-count">—</span>
+                <span class="summary-label">Commodities</span>
+            </div>
+            <div class="summary-card summary-high">
+                <span class="summary-value" id="high-count">—</span>
+                <span class="summary-label">High</span>
+            </div>
+            <div class="summary-card summary-medium-high">
+                <span class="summary-value" id="medium-high-count">—</span>
+                <span class="summary-label">Med-High</span>
+            </div>
+            <div class="summary-card summary-medium">
+                <span class="summary-value" id="medium-count">—</span>
+                <span class="summary-label">Medium</span>
+            </div>
+            <div class="summary-card summary-low-medium">
+                <span class="summary-value" id="low-medium-count">—</span>
+                <span class="summary-label">Low-Med</span>
+            </div>
+            <div class="summary-card summary-low">
+                <span class="summary-value" id="low-count">—</span>
+                <span class="summary-label">Low</span>
+            </div>
+            <div class="summary-card summary-score">
+                <span class="summary-value" id="avg-score">—</span>
+                <span class="summary-label">Avg Score</span>
+            </div>
+        </section>
+
+        <section class="filter-section">
+            <div class="filter-bar">
+                <button class="filter-chip active" data-filter="ALL" onclick="setFilter('ALL', this)">
+                    <span class="chip-icon">◉</span> All
+                </button>
+                <button class="filter-chip" data-filter="WEAT" onclick="setFilter('WEAT', this)">
+                    <span class="chip-icon">🌾</span> Wheat
+                </button>
+                <button class="filter-chip" data-filter="CORN" onclick="setFilter('CORN', this)">
+                    <span class="chip-icon">🌽</span> Corn
+                </button>
+                <button class="filter-chip" data-filter="SOYB" onclick="setFilter('SOYB', this)">
+                    <span class="chip-icon">🫘</span> Soybeans
+                </button>
+                <button class="filter-chip" data-filter="JO" onclick="setFilter('JO', this)">
+                    <span class="chip-icon">☕</span> Coffee
+                </button>
+                <button class="filter-chip" data-filter="UNG" onclick="setFilter('UNG', this)">
+                    <span class="chip-icon">⛽</span> Natural Gas
+                </button>
+            </div>
+        </section>
+
+        <section id="risk-container" class="risk-grid"></section>
+
+        <section id="loading-state" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading risk data...</p>
+        </section>
+
+        <section id="empty-state" class="empty-state hidden">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+            <p>No risk data available</p>
+            <span>Run the batch process or wait for real-time events</span>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <span>OrbitalAlpha &mdash; Lambda Architecture Risk Engine</span>
+        <span id="last-update"></span>
+    </footer>
 </div>
-
-<main>
-    <section class="actions">
-        <button onclick="loadRisks()">Refresh risks</button>
-    </section>
-
-    <section id="risk-container" class="grid"></section>
-</main>
 
 <script src="app.js"></script>
 </body>

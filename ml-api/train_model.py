@@ -64,7 +64,7 @@ def main():
 
 
 def _print_results(y_test, y_pred, accuracy: float, model_path: Path, model: Pipeline):
-    labels = ["LOW", "MEDIUM", "HIGH"]
+    labels = ["LOW", "LOW_MEDIUM", "MEDIUM", "MEDIUM_HIGH", "HIGH"]
     print("\n" + "=" * 50)
     print(f"Accuracy: {accuracy:.2f}")
     print("\nClassification report:")

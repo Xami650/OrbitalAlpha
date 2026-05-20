@@ -60,8 +60,8 @@ def predict(request: PredictionRequest):
     probabilities = model.predict_proba(features)[0]
     classes = list(model.classes_)
 
-    risk_level = str(classes[probabilities.argmax()])
     risk_score = _score_from_probabilities(classes, probabilities)
+    risk_level = _level_from_score(risk_score)
 
     return PredictionResponse(
         commodity=request.commodity.upper(),
@@ -72,9 +72,27 @@ def predict(request: PredictionRequest):
 
 
 def _score_from_probabilities(classes: list, probabilities) -> float:
-    score_by_level = {"LOW": 20.0, "MEDIUM": 55.0, "HIGH": 90.0}
+    score_by_level = {
+        "LOW": 10.0,
+        "LOW_MEDIUM": 30.0,
+        "MEDIUM": 50.0,
+        "MEDIUM_HIGH": 70.0,
+        "HIGH": 90.0,
+    }
     score = sum(score_by_level.get(str(c), 0.0) * p for c, p in zip(classes, probabilities))
     return round(score, 2)
+
+
+def _level_from_score(score: float) -> str:
+    if score >= 80:
+        return "HIGH"
+    if score >= 60:
+        return "MEDIUM_HIGH"
+    if score >= 40:
+        return "MEDIUM"
+    if score >= 20:
+        return "LOW_MEDIUM"
+    return "LOW"
 
 
 def _build_reason(request: PredictionRequest, risk_level: str) -> str:

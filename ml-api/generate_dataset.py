@@ -169,7 +169,7 @@ def _extract_weather_scenarios(events: list[dict]) -> list[dict]:
 
         commodity_type = data.get("commodityType", "").upper()
         symbol = COMMODITY_TYPE_TO_SYMBOL.get(commodity_type)
-        raw_date = data.get("date", "")
+        raw_date = data.get("periodStart", data.get("date", ""))
 
         if not symbol or len(raw_date) != 8:
             continue
@@ -180,10 +180,10 @@ def _extract_weather_scenarios(events: list[dict]) -> list[dict]:
         seen.add(key)
 
         readings.append({
-            "precipitation": float(data.get("precipitation", 0.0)),
-            "rootZoneSoilWetness": float(data.get("rootZoneSoilWetness", 0.0)),
-            "temperatureMax": float(data.get("temperatureMax", 0.0)),
-            "temperatureMin": float(data.get("temperatureMin", 0.0)),
+            "precipitation": float(data.get("avgPrecipitation", data.get("precipitation", 0.0))),
+            "rootZoneSoilWetness": float(data.get("avgRootZoneSoilWetness", data.get("rootZoneSoilWetness", 0.0))),
+            "temperatureMax": float(data.get("avgTemperatureMax", data.get("temperatureMax", 0.0))),
+            "temperatureMin": float(data.get("avgTemperatureMin", data.get("temperatureMin", 0.0))),
         })
 
     if not readings:
@@ -265,10 +265,14 @@ def _assign_risk_level(row: dict) -> str:
     if row["temperatureMaxDelta"] > 5:
         score += 5
 
-    if score >= 70:
+    if score >= 80:
         return "HIGH"
+    if score >= 60:
+        return "MEDIUM_HIGH"
     if score >= 40:
         return "MEDIUM"
+    if score >= 20:
+        return "LOW_MEDIUM"
     return "LOW"
 
 

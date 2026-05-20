@@ -2,8 +2,7 @@ package org.ulpgc.dacd.businessunit.controller.serving;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.businessunit.controller.datamart.BatchDatamart;
-import org.ulpgc.dacd.businessunit.controller.datamart.ServingDatamart;
+import org.ulpgc.dacd.businessunit.controller.batch.BatchDatamart;
 import org.ulpgc.dacd.businessunit.controller.predictor.RiskPredictor;
 import org.ulpgc.dacd.businessunit.controller.processor.CommodityPriceEventProcessor;
 import org.ulpgc.dacd.businessunit.controller.processor.WeatherEventProcessor;

@@ -2,7 +2,6 @@ package org.ulpgc.dacd.businessunit.controller.batch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ulpgc.dacd.businessunit.controller.datamart.BatchDatamart;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
 import java.util.List;

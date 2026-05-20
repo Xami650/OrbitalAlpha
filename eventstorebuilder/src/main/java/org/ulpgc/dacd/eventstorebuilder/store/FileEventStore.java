@@ -107,8 +107,8 @@ public class FileEventStore implements EventStore {
             return readRequiredField(event, "symbol") + "|" + readRequiredField(event, "priceTimestamp");
         }
 
-        if (event.has("producerId") && event.has("date")) {
-            return readRequiredField(event, "producerId") + "|" + readRequiredField(event, "date");
+        if (event.has("producerId") && event.has("periodStart")) {
+            return readRequiredField(event, "producerId") + "|" + readRequiredField(event, "periodStart");
         }
 
         return event.toString();

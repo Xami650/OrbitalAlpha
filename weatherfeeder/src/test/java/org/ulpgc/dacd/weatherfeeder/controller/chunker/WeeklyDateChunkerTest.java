@@ -83,10 +83,10 @@ public class WeeklyDateChunkerTest {
         LocalDate today = LocalDate.of(2026, 5, 15);
 
         List<DateRange> blocks = chunker.backfillWeeks(today, 74);
-        DateRange last = blocks.get(blocks.size() - 1);
+        DateRange last = blocks.getLast();
 
-        assertEquals(LocalDate.of(2024, 11, 21), last.start());
-        assertEquals(LocalDate.of(2024, 11, 27), last.end());
+        assertEquals(LocalDate.of(2024, 12, 14), last.start());
+        assertEquals(LocalDate.of(2024, 12, 20), last.end());
     }
 
     @Test

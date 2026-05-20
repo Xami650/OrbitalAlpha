@@ -73,8 +73,6 @@ public class MlApiRiskPredictor implements RiskPredictor {
             logger.info("ML prediction for {}: {} (score={})", metrics.commodity(), snapshot.riskLevel(), snapshot.riskScore());
             return snapshot;
 
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
             logger.error("ML API call failed for {}", metrics.commodity(), e);
             throw new RuntimeException("ML API call failed for " + metrics.commodity(), e);

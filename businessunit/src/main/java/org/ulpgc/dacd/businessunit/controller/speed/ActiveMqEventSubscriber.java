@@ -11,21 +11,22 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ActiveMqEventSubscriber implements EventSubscriber {
 
     private static final Logger logger = LoggerFactory.getLogger(ActiveMqEventSubscriber.class);
 
     private final String brokerUrl;
+    private final String clientId;
     private final List<String> topicNames;
 
     private Connection connection;
     private Session session;
     private final List<MessageConsumer> consumers = new ArrayList<>();
 
-    public ActiveMqEventSubscriber(String brokerUrl, List<String> topicNames) {
+    public ActiveMqEventSubscriber(String brokerUrl, String clientId, List<String> topicNames) {
         this.brokerUrl = brokerUrl;
+        this.clientId = clientId;
         this.topicNames = topicNames;
     }
 
@@ -36,12 +37,13 @@ public class ActiveMqEventSubscriber implements EventSubscriber {
             factory.setTrustedPackages(List.of("org.ulpgc.dacd", "java.lang", "java.util"));
 
             connection = factory.createConnection();
+            connection.setClientID(clientId);
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
             for (String topicName : topicNames) {
                 Topic topic = session.createTopic(topicName);
 
-                MessageConsumer consumer = session.createConsumer(topic);
+                MessageConsumer consumer = session.createDurableSubscriber(topic, "business-unit-" + topicName);
 
                 consumer.setMessageListener(message -> {
                     try {

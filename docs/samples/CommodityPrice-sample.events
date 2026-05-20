@@ -1,0 +1,5 @@
+{"ts":"2026-05-12T14:22:01.384210Z","ss":"AlphaVantage","symbol":"WEAT","priceTimestamp":"2026-05-11T00:00:00Z","open":24.78,"high":25.115,"low":24.65,"close":25.0,"adjustedClose":25.0,"volume":1422909,"dividendAmount":0.0}
+{"ts":"2026-05-12T14:22:01.592841Z","ss":"AlphaVantage","symbol":"CORN","priceTimestamp":"2026-05-11T00:00:00Z","open":20.18,"high":20.44,"low":20.02,"close":20.35,"adjustedClose":20.35,"volume":987432,"dividendAmount":0.0}
+{"ts":"2026-05-12T14:22:01.801533Z","ss":"AlphaVantage","symbol":"SOYB","priceTimestamp":"2026-05-11T00:00:00Z","open":25.32,"high":25.71,"low":25.19,"close":25.55,"adjustedClose":25.55,"volume":612844,"dividendAmount":0.0}
+{"ts":"2026-05-12T14:22:02.019742Z","ss":"AlphaVantage","symbol":"JO","priceTimestamp":"2026-05-11T00:00:00Z","open":52.41,"high":53.88,"low":52.10,"close":53.62,"adjustedClose":53.62,"volume":345210,"dividendAmount":0.0}
+{"ts":"2026-05-12T14:22:02.238105Z","ss":"AlphaVantage","symbol":"UNG","priceTimestamp":"2026-05-11T00:00:00Z","open":13.15,"high":13.42,"low":12.98,"close":13.30,"adjustedClose":13.30,"volume":2104877,"dividendAmount":0.0}

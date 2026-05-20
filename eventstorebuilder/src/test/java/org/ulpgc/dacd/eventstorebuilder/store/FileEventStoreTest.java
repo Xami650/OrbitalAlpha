@@ -94,10 +94,10 @@ class FileEventStoreTest {
     ) {
         return ("{\"ts\":\"%s\",\"ss\":\"%s\","
                 + "\"producerId\":\"%s\",\"producerName\":\"Test Producer\","
-                + "\"commodityType\":\"%s\",\"date\":\"%s\","
-                + "\"precipitation\":0.0,\"rootZoneSoilWetness\":0.58,"
-                + "\"temperatureMax\":21.33,\"temperatureMin\":7.9}")
-                .formatted(ts, sourceSystem, producerId, commodityType, date);
+                + "\"commodityType\":\"%s\",\"periodStart\":\"%s\",\"periodEnd\":\"%s\",\"daysUsed\":7,"
+                + "\"avgPrecipitation\":0.0,\"avgRootZoneSoilWetness\":0.58,"
+                + "\"avgTemperatureMax\":21.33,\"avgTemperatureMin\":7.9}")
+                .formatted(ts, sourceSystem, producerId, commodityType, date, date);
     }
 
     private String simpleEvent(String ts, String ss) {
@@ -230,7 +230,7 @@ class FileEventStoreTest {
 
         assertThat(lines).hasSize(1);
         assertThat(lines.getFirst()).contains("\"producerId\":\"WHEAT_1\"");
-        assertThat(lines.getFirst()).contains("\"date\":\"20260426\"");
+        assertThat(lines.getFirst()).contains("\"periodStart\":\"20260426\"");
     }
 
     @Test
@@ -258,9 +258,9 @@ class FileEventStoreTest {
         List<String> lines = Files.readAllLines(eventFile("Weather", "weatherfeeder", "20260429"));
 
         assertThat(lines).hasSize(3);
-        assertThat(lines.get(0)).contains("\"date\":\"20260426\"");
-        assertThat(lines.get(1)).contains("\"date\":\"20260427\"");
-        assertThat(lines.get(2)).contains("\"date\":\"20260428\"");
+        assertThat(lines.get(0)).contains("\"periodStart\":\"20260426\"");
+        assertThat(lines.get(1)).contains("\"periodStart\":\"20260427\"");
+        assertThat(lines.get(2)).contains("\"periodStart\":\"20260428\"");
     }
 
     @Test

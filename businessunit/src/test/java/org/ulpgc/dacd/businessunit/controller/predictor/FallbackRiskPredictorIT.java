@@ -36,7 +36,7 @@ class FallbackRiskPredictorIT {
 
         assertThat(predictor.isUsingFallback()).isTrue();
         assertThat(result.commodity()).isEqualTo("WEAT");
-        assertThat(result.riskLevel()).isIn(RiskLevel.LOW, RiskLevel.MEDIUM, RiskLevel.HIGH);
+        assertThat(result.riskLevel()).isIn((Object) RiskLevel.values());
         assertThat(result.riskScore()).isGreaterThanOrEqualTo(0.0);
         assertThat(result.reason()).isNotBlank();
         logger.info("[FALLBACK] {} / score={} / {}", result.riskLevel(), result.riskScore(), result.reason());
@@ -54,7 +54,7 @@ class FallbackRiskPredictorIT {
 
         assertThat(predictor.isUsingFallback()).isFalse();
         assertThat(result.commodity()).isEqualTo("WEAT");
-        assertThat(result.riskLevel()).isIn(RiskLevel.LOW, RiskLevel.MEDIUM, RiskLevel.HIGH);
+        assertThat(result.riskLevel()).isIn((Object) RiskLevel.values());
         assertThat(result.riskScore()).isGreaterThanOrEqualTo(0.0);
         assertThat(result.reason()).isNotBlank();
         logger.info("[ML] {} / score={} / {}", result.riskLevel(), result.riskScore(), result.reason());

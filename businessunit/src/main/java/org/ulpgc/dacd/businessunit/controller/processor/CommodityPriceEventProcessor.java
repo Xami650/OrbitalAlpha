@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,6 +20,8 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
 
     private static final String COMMODITY_PRICE_TOPIC = "CommodityPrice";
     private static final int LOOKBACK_WINDOW = 8;
+    private static final int TEMPORAL_WINDOW_WEEKS = 52;
+    private static final DateTimeFormatter FILE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Override
     public Map<String, PriceMetrics> process(List<HistoricalEvent> historicalEvents) {
@@ -35,7 +39,7 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
 
             List<Double> allChanges = computeAllPriceChanges(orderedEvents);
 
-            JsonObject latest = orderedEvents.get(orderedEvents.size() - 1);
+            JsonObject latest = orderedEvents.getLast();
             JsonObject previous = orderedEvents.size() > 1
                     ? orderedEvents.get(orderedEvents.size() - 2)
                     : latest;
@@ -56,7 +60,7 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
                     priceVolatility = calculateStdDev(window);
                     priceTrend = calculateMean(window);
                 } else {
-                    priceTrend = window.get(0);
+                    priceTrend = window.getFirst();
                 }
             }
 
@@ -100,9 +104,11 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
 
     private Map<String, List<JsonObject>> groupEventsByCommodity(List<HistoricalEvent> historicalEvents) {
         Map<String, List<JsonObject>> eventsByCommodity = new HashMap<>();
+        String cutoffDate = LocalDate.now().minusWeeks(TEMPORAL_WINDOW_WEEKS).format(FILE_DATE_FORMAT);
 
         historicalEvents.stream()
                 .filter(this::isCommodityPriceEvent)
+                .filter(event -> event.fileDate().compareTo(cutoffDate) >= 0)
                 .map(this::parseJson)
                 .filter(json -> json.has("symbol"))
                 .forEach(json -> {
@@ -110,6 +116,8 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
                     eventsByCommodity.computeIfAbsent(commodity, ignored -> new ArrayList<>()).add(json);
                 });
 
+        logger.debug("Temporal filter applied: only processing events from {} onward ({} weeks)",
+                cutoffDate, TEMPORAL_WINDOW_WEEKS);
         return eventsByCommodity;
     }
 

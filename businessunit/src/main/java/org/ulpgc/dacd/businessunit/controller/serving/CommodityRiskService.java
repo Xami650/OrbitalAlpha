@@ -1,6 +1,5 @@
 package org.ulpgc.dacd.businessunit.controller.serving;
 
-import org.ulpgc.dacd.businessunit.controller.datamart.ServingDatamart;
 import org.ulpgc.dacd.businessunit.model.CommodityRiskSnapshot;
 
 import java.util.List;

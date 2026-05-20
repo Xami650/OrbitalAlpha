@@ -2,6 +2,7 @@ package org.ulpgc.dacd.businessunit.view;
 
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.plugin.bundled.CorsPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.controller.serving.CommodityRiskService;
@@ -27,6 +28,21 @@ public class BusinessUnitWebServer {
     public void start() {
         app = Javalin.create(config -> {
             config.staticFiles.add("/public", Location.CLASSPATH);
+
+            config.bundledPlugins.enableCors(cors ->
+                    cors.addRule(CorsPluginConfig.CorsRule::anyHost)
+            );
+
+            config.routes.exception(IllegalArgumentException.class, (e, context) -> {
+                context.status(400);
+                context.json(Map.of("error", e.getMessage()));
+            });
+
+            config.routes.exception(Exception.class, (e, context) -> {
+                logger.error("Unhandled exception on {} {}", context.method(), context.path(), e);
+                context.status(500);
+                context.json(Map.of("error", "Internal server error"));
+            });
 
             config.routes.get("/api/health", context -> context.json(Map.of("status", "OK")));
 

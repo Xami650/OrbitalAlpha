@@ -15,7 +15,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "=== 1/5 Starting ML API ==="
+echo "=== 1/3 Starting ML API ==="
 cd "$ROOT_DIR/ml-api"
 if [ ! -d ".venv" ]; then
     echo "Creating Python venv..."
@@ -35,27 +35,18 @@ done
 echo "ML API is ready."
 
 echo ""
-echo "=== 2/5 Starting EventStoreBuilder ==="
+echo "=== 2/3 Starting EventStoreBuilder ==="
 mvn -q exec:java -pl eventstorebuilder &
 PIDS+=($!)
 sleep 3
 
 echo ""
-echo "=== 3/5 Starting BusinessUnit ==="
+echo "=== 3/3 Starting BusinessUnit ==="
 mvn -q exec:java -pl businessunit &
 PIDS+=($!)
-sleep 3
-echo ""
-echo "=== 4/5 Starting WeatherFeeder ==="
-mvn -q exec:java -pl weatherfeeder -Dexec.args="weatherfeeder/config/producers.csv" &
-PIDS+=($!)
-
 
 echo ""
-echo "=== 5/5 Starting MarketFeeder ==="
-mvn -q exec:java -pl marketfeeder &
-PIDS+=($!)
-
-echo ""
-echo "All services started. Press Ctrl+C to stop all."
+echo "All services started. Dashboard at http://localhost:7070"
+echo "Feeders (weatherfeeder, marketfeeder) run separately on their own schedule."
+echo "Press Ctrl+C to stop all."
 wait

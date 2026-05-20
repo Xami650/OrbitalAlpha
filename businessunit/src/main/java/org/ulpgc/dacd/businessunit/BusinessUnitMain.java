@@ -7,10 +7,10 @@ import org.ulpgc.dacd.businessunit.controller.batch.EventStoreReader;
 import org.ulpgc.dacd.businessunit.controller.batch.FileEventStoreReader;
 import org.ulpgc.dacd.businessunit.controller.config.BusinessUnitConfig;
 import org.ulpgc.dacd.businessunit.controller.config.BusinessUnitConfigLoader;
-import org.ulpgc.dacd.businessunit.controller.datamart.BatchDatamart;
-import org.ulpgc.dacd.businessunit.controller.datamart.ServingDatamart;
-import org.ulpgc.dacd.businessunit.controller.datamart.SqliteBatchDatamart;
-import org.ulpgc.dacd.businessunit.controller.datamart.SqliteServingDatamart;
+import org.ulpgc.dacd.businessunit.controller.batch.BatchDatamart;
+import org.ulpgc.dacd.businessunit.controller.batch.SqliteBatchDatamart;
+import org.ulpgc.dacd.businessunit.controller.serving.ServingDatamart;
+import org.ulpgc.dacd.businessunit.controller.serving.SqliteServingDatamart;
 import org.ulpgc.dacd.businessunit.controller.predictor.FallbackRiskPredictor;
 import org.ulpgc.dacd.businessunit.controller.predictor.HeuristicRiskPredictor;
 import org.ulpgc.dacd.businessunit.controller.predictor.MlApiRiskPredictor;
@@ -43,7 +43,7 @@ public class BusinessUnitMain {
             ServingLayer servingLayer = createServingLayer(batchDatamart, servingDatamart, predictor);
             servingLayer.rebuild();
 
-            SpeedLayer speedLayer = createSpeedLayer(config, batchLayer, servingLayer);
+            SpeedLayer speedLayer = createSpeedLayer(config, batchDatamart, servingLayer);
             CommodityRiskService commodityRiskService = new CommodityRiskService(servingDatamart);
             BusinessUnitWebServer webServer = new BusinessUnitWebServer(
                     config.apiPort(),
@@ -108,17 +108,18 @@ public class BusinessUnitMain {
 
     private static SpeedLayer createSpeedLayer(
             BusinessUnitConfig config,
-            BatchLayer batchLayer,
+            BatchDatamart batchDatamart,
             ServingLayer servingLayer
     ) {
         EventSubscriber eventSubscriber = new ActiveMqEventSubscriber(
                 config.brokerUrl(),
+                config.clientId(),
                 config.topics()
         );
 
         return new SpeedLayer(
                 eventSubscriber,
-                batchLayer,
+                batchDatamart,
                 servingLayer
         );
     }

@@ -89,15 +89,15 @@ class WeatherEventProcessorTest {
     }
 
     private HistoricalEvent weatherEvent(
-            String commodityType, String date,
+            String commodityType, String periodStart,
             double precipitation, double soilWetness,
             double tempMax, double tempMin
     ) {
         String json = String.format(
-                "{\"commodityType\":\"%s\",\"date\":\"%s\",\"precipitation\":%s," +
-                "\"rootZoneSoilWetness\":%s,\"temperatureMax\":%s,\"temperatureMin\":%s}",
-                commodityType, date, precipitation, soilWetness, tempMax, tempMin
+                "{\"commodityType\":\"%s\",\"periodStart\":\"%s\",\"avgPrecipitation\":%s," +
+                "\"avgRootZoneSoilWetness\":%s,\"avgTemperatureMax\":%s,\"avgTemperatureMin\":%s}",
+                commodityType, periodStart, precipitation, soilWetness, tempMax, tempMin
         );
-        return new HistoricalEvent("Weather", "weatherfeeder", date, json);
+        return new HistoricalEvent("Weather", "weatherfeeder", periodStart, json);
     }
 }

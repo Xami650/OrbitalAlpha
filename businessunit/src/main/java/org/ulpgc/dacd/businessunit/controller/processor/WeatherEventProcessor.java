@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,6 +19,8 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
     private static final Logger logger = LoggerFactory.getLogger(WeatherEventProcessor.class);
 
     private static final String WEATHER_TOPIC = "Weather";
+    private static final int TEMPORAL_WINDOW_WEEKS = 52;
+    private static final DateTimeFormatter FILE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Override
     public Map<String, WeatherMetrics> process(List<HistoricalEvent> historicalEvents) {
@@ -27,8 +31,8 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
             double[] avgMetrics = computeHistoricalAverages(events);
 
             JsonObject latest = events.stream()
-                    .filter(json -> json.has("date"))
-                    .max(Comparator.comparing(json -> json.get("date").getAsString()))
+                    .filter(json -> json.has("periodStart"))
+                    .max(Comparator.comparing(json -> json.get("periodStart").getAsString()))
                     .orElse(null);
 
             if (latest == null) {
@@ -36,10 +40,10 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
                 return;
             }
 
-            double precipitation = readDouble(latest, "precipitation");
-            double rootZoneSoilWetness = readDouble(latest, "rootZoneSoilWetness");
-            double temperatureMax = readDouble(latest, "temperatureMax");
-            double temperatureMin = readDouble(latest, "temperatureMin");
+            double precipitation = readDouble(latest, "avgPrecipitation");
+            double rootZoneSoilWetness = readDouble(latest, "avgRootZoneSoilWetness");
+            double temperatureMax = readDouble(latest, "avgTemperatureMax");
+            double temperatureMin = readDouble(latest, "avgTemperatureMin");
 
             weatherMetricsByCommodity.put(commodity, new WeatherMetrics(
                     precipitation,
@@ -58,9 +62,11 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
 
     private Map<String, List<JsonObject>> groupEventsByCommodity(List<HistoricalEvent> historicalEvents) {
         Map<String, List<JsonObject>> eventsByCommodity = new HashMap<>();
+        String cutoffDate = LocalDate.now().minusWeeks(TEMPORAL_WINDOW_WEEKS).format(FILE_DATE_FORMAT);
 
         historicalEvents.stream()
                 .filter(this::isWeatherEvent)
+                .filter(event -> event.fileDate().compareTo(cutoffDate) >= 0)
                 .map(this::parseJson)
                 .filter(json -> json.has("commodityType"))
                 .forEach(json -> {
@@ -68,6 +74,8 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
                     eventsByCommodity.computeIfAbsent(commodity, ignored -> new ArrayList<>()).add(json);
                 });
 
+        logger.debug("Temporal filter applied: only processing events from {} onward ({} weeks)",
+                cutoffDate, TEMPORAL_WINDOW_WEEKS);
         return eventsByCommodity;
     }
 
@@ -78,9 +86,9 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
         int count = 0;
 
         for (JsonObject json : events) {
-            sumPrecipitation += readDouble(json, "precipitation");
-            sumSoilWetness += readDouble(json, "rootZoneSoilWetness");
-            sumTempMax += readDouble(json, "temperatureMax");
+            sumPrecipitation += readDouble(json, "avgPrecipitation");
+            sumSoilWetness += readDouble(json, "avgRootZoneSoilWetness");
+            sumTempMax += readDouble(json, "avgTemperatureMax");
             count++;
         }
 
