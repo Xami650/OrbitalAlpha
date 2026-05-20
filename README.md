@@ -135,8 +135,71 @@ docker run -d --name activemq \
   -p 8161:8161 \
   apache/activemq-classic:latest
 ```
+**Option C — Native install (Windows):**
 
-Verify: open `http://localhost:8161` (user: `admin`, password: `admin`).
+1. Download **Apache ActiveMQ Classic 6.x** from the official website:
+
+   https://activemq.apache.org/components/classic/download/
+
+2. Extract the `.zip` file to a simple path, for example:
+
+   ```text
+   C:\tools\apache-activemq-6.2.4
+   ```
+   Avoid paths with accents, special characters, or very long directory names.
+
+3. Make sure Java is installed and `JAVA_HOME` is configured.
+
+   Example:
+
+   ```text
+   JAVA_HOME=C:\Program Files\Java\jdk-21
+   ```
+   
+   Verify it with:
+   
+   ```bash
+   java -version
+   echo %JAVA_HOME%
+   ```
+
+5. Open **Command Prompt** or **PowerShell** and go to the ActiveMQ `bin` folder:
+
+   ```bash
+   cd C:\tools\apache-activemq-6.2.4\bin
+   ```
+
+   If your extracted folder contains another nested folder, the path may be similar to:
+
+   ```bash
+   cd C:\tools\apache-activemq-6.2.4-bin\apache-activemq-6.2.4\bin
+   ```
+
+6. Start ActiveMQ in console mode:
+
+   ```bash
+   activemq.bat console
+   ```
+
+   If you are using PowerShell, run:
+
+   ```bash
+   .\activemq.bat console
+   ```
+
+7. Verify that ActiveMQ is running:
+
+   - Broker URL: `tcp://localhost:61616`
+   - Web console: `http://localhost:8161`
+   - Default user: `admin`
+   - Default password: `admin`
+
+8. Keep this terminal open while running the Java modules.
+
+   The project modules that publish or consume events require ActiveMQ to be running before they start.
+
+
+   Verify: open `http://localhost:8161` (user: `admin`, password: `admin`).
 
 ### 3. Configure modules
 
