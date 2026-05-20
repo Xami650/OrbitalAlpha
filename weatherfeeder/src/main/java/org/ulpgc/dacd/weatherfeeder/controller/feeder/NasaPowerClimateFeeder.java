@@ -1,0 +1,79 @@
+package org.ulpgc.dacd.weatherfeeder.controller.feeder;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.ulpgc.dacd.weatherfeeder.controller.feeder.parser.NasaPowerClimateParser;
+import org.ulpgc.dacd.weatherfeeder.model.DateRange;
+import org.ulpgc.dacd.weatherfeeder.model.NasaPowerApiConfig;
+import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
+import org.ulpgc.dacd.weatherfeeder.model.events.WeatherEvent;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
+public class NasaPowerClimateFeeder implements ClimateFeeder {
+
+    private static final Logger logger = LoggerFactory.getLogger(NasaPowerClimateFeeder.class);
+
+    private final OkHttpClient client;
+    private final NasaPowerClimateParser parser;
+    private final NasaPowerApiConfig apiConfig;
+
+    public NasaPowerClimateFeeder(OkHttpClient client, NasaPowerApiConfig apiConfig, NasaPowerClimateParser parser) {
+        if (client == null) {
+            throw new IllegalArgumentException("client no puede ser null.");
+        }
+        if (apiConfig == null) {
+            throw new IllegalArgumentException("apiConfig no puede ser null.");
+        }
+        if (parser == null) {
+            throw new IllegalArgumentException("parser no puede ser null.");
+        }
+        this.client = client;
+        this.apiConfig = apiConfig;
+        this.parser = parser;
+    }
+
+    @Override
+    public List<WeatherEvent> fetch(Producer producer, DateRange range) {
+        if (producer == null) {
+            logger.error("Producer null al solicitar datos climaticos.");
+            return Collections.emptyList();
+        }
+
+        String url = buildUrl(producer, range);
+        Request request = new Request.Builder().url(url).get().build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return handleResponse(response, producer, range);
+        } catch (IOException e) {
+            logger.error("Fallo de conexion con NASA POWER para {} en {}.", producer.id(), range, e);
+            return Collections.emptyList();
+        } catch (Exception e) {
+            logger.error("Error inesperado procesando {} en {}.", producer.id(), range, e);
+            return Collections.emptyList();
+        }
+    }
+
+    private String buildUrl(Producer producer, DateRange range) {
+        return String.format(
+                apiConfig.urlTemplate(),
+                producer.longitude(),
+                producer.latitude(),
+                range.startAsApiDate(),
+                range.endAsApiDate()
+        );
+    }
+
+    private List<WeatherEvent> handleResponse(Response response, Producer producer, DateRange range) throws IOException {
+        if (!response.isSuccessful() || response.body() == null) {
+            logger.error("HTTP {} al consultar NASA POWER para {} en {}.", response.code(), producer.id(), range);
+            return Collections.emptyList();
+        }
+        return parser.parse(response.body().string(), producer);
+    }
+}

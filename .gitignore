@@ -1,6 +1,17 @@
-### ENVIRONMENT
-.env
-.env.*
+
+*.properties
+!businessunit/src/main/resources/businessunit.properties
+!weatherfeeder/src/main/resources/application.properties
+!*.example.properties
+*.env.*
+
+*.md
+!README.md
+!docs/samples/*.md
+*.pdf
+.venv/
+__pycache__/
+*.pkl
 
 ### DATABASES
 *.db
@@ -51,8 +62,18 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+out/
+*.class
+eventstore/
+*.events
+!docs/samples/*.events
+
 ### VS Code
 .vscode/
+
+### LOGS
+logs/
+*.log
 
 ### OS FILES
 .DS_Store

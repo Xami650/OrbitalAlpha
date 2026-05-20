@@ -1,0 +1,631 @@
+/* ── Reset & Base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg: #0b0f19;
+    --bg-card: #131a2b;
+    --bg-card-hover: #182236;
+    --surface: #1a2332;
+    --border: #1e2d42;
+    --text: #e2e8f0;
+    --text-muted: #7a8ba7;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.25);
+
+    --high: #ef4444;
+    --high-bg: rgba(239, 68, 68, 0.08);
+    --high-glow: rgba(239, 68, 68, 0.35);
+    --medium-high: #f97316;
+    --medium-high-bg: rgba(249, 115, 22, 0.08);
+    --medium-high-glow: rgba(249, 115, 22, 0.35);
+    --medium: #eab308;
+    --medium-bg: rgba(234, 179, 8, 0.08);
+    --medium-glow: rgba(234, 179, 8, 0.35);
+    --low-medium: #06b6d4;
+    --low-medium-bg: rgba(6, 182, 212, 0.08);
+    --low-medium-glow: rgba(6, 182, 212, 0.35);
+    --low: #10b981;
+    --low-bg: rgba(16, 185, 129, 0.08);
+    --low-glow: rgba(16, 185, 129, 0.35);
+
+    --radius: 16px;
+    --radius-sm: 10px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: linear-gradient(180deg, #0f1629 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+}
+
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.logo-orbit {
+    width: 40px;
+    height: 40px;
+    position: relative;
+}
+
+.logo-core {
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 12px var(--accent-glow), 0 0 24px var(--accent-glow);
+}
+
+.logo-ring {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.5;
+    animation: pulse-ring 3s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.2; }
+}
+
+.logo-text h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.logo-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* ── Status Chips ─────────────────────────────────────────── */
+.status-group { display: flex; gap: 8px; }
+
+.status-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.status-loading .status-dot { background: var(--text-muted); animation: blink 1.5s infinite; }
+.status-online .status-dot { background: var(--low); box-shadow: 0 0 6px var(--low-glow); }
+.status-offline .status-dot { background: var(--high); box-shadow: 0 0 6px var(--high-glow); }
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ── Refresh Button ───────────────────────────────────────── */
+.btn-refresh {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-refresh:hover {
+    background: #2563eb;
+    box-shadow: 0 0 20px var(--accent-glow);
+    transform: translateY(-1px);
+}
+
+.btn-refresh:active { transform: translateY(0); }
+
+.btn-refresh.refreshing .refresh-icon { animation: spin 0.8s linear infinite; }
+
+.refresh-icon { width: 16px; height: 16px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Alert Banner ─────────────────────────────────────────── */
+.alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 32px;
+    background: rgba(245, 158, 11, 0.08);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    font-size: 13px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.alert-banner svg { width: 18px; height: 18px; flex-shrink: 0; stroke: #fbbf24; }
+.alert-banner.hidden { display: none; }
+
+/* ── Summary Bar ──────────────────────────────────────────── */
+.main { flex: 1; padding: 24px 32px; }
+
+.summary-bar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: var(--transition);
+}
+
+.summary-card:hover { border-color: var(--accent); }
+
+.summary-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.summary-high .summary-value { color: var(--high); }
+.summary-medium-high .summary-value { color: var(--medium-high); }
+.summary-medium .summary-value { color: var(--medium); }
+.summary-low-medium .summary-value { color: var(--low-medium); }
+.summary-low .summary-value { color: var(--low); }
+.summary-score .summary-value { color: var(--accent); }
+
+/* ── Filter Bar ───────────────────────────────────────────── */
+.filter-section { margin-bottom: 24px; }
+
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.filter-chip:hover {
+    background: var(--bg-card-hover);
+    color: var(--text);
+    border-color: #2a3a52;
+}
+
+.filter-chip.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.chip-icon { font-size: 15px; line-height: 1; }
+
+/* ── Risk Grid ────────────────────────────────────────────── */
+.risk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+/* ── Risk Card ────────────────────────────────────────────── */
+.risk-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: card-enter 0.5s ease forwards;
+}
+
+.risk-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    transition: var(--transition);
+}
+
+.risk-card:hover {
+    transform: translateY(-4px);
+    border-color: #2a3a52;
+}
+
+.risk-card.risk-high::before { background: linear-gradient(90deg, var(--high), #dc2626); }
+.risk-card.risk-high:hover { box-shadow: 0 8px 32px var(--high-bg); }
+
+.risk-card.risk-medium-high::before { background: linear-gradient(90deg, var(--medium-high), #ea580c); }
+.risk-card.risk-medium-high:hover { box-shadow: 0 8px 32px var(--medium-high-bg); }
+
+.risk-card.risk-medium::before { background: linear-gradient(90deg, var(--medium), #ca8a04); }
+.risk-card.risk-medium:hover { box-shadow: 0 8px 32px var(--medium-bg); }
+
+.risk-card.risk-low-medium::before { background: linear-gradient(90deg, var(--low-medium), #0891b2); }
+.risk-card.risk-low-medium:hover { box-shadow: 0 8px 32px var(--low-medium-bg); }
+
+.risk-card.risk-low::before { background: linear-gradient(90deg, var(--low), #34d399); }
+.risk-card.risk-low:hover { box-shadow: 0 8px 32px var(--low-bg); }
+
+@keyframes card-enter {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.card-identity {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.card-name {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.card-ticker {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* ── Risk Badge ───────────────────────────────────────────── */
+.risk-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.risk-badge.badge-high {
+    background: var(--high-bg);
+    color: var(--high);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.risk-badge.badge-medium-high {
+    background: var(--medium-high-bg);
+    color: var(--medium-high);
+    border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+.risk-badge.badge-medium {
+    background: var(--medium-bg);
+    color: var(--medium);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+}
+
+.risk-badge.badge-low-medium {
+    background: var(--low-medium-bg);
+    color: var(--low-medium);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.risk-badge.badge-low {
+    background: var(--low-bg);
+    color: var(--low);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+/* ── Gauge ────────────────────────────────────────────────── */
+.card-gauge {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.gauge-ring {
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.gauge-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+.gauge-bg {
+    fill: none;
+    stroke: var(--surface);
+    stroke-width: 6;
+}
+
+.gauge-fill {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                stroke 0.3s ease;
+}
+
+.gauge-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.gauge-value {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.gauge-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.gauge-details { flex: 1; }
+
+.gauge-bar-container { margin-bottom: 8px; }
+
+.gauge-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.gauge-bar-track {
+    height: 6px;
+    background: var(--surface);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.gauge-bar-value {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0;
+}
+
+.risk-high .gauge-fill { stroke: var(--high); }
+.risk-high .gauge-value { color: var(--high); }
+.risk-high .gauge-bar-value { background: linear-gradient(90deg, var(--high), #dc2626); }
+
+.risk-medium-high .gauge-fill { stroke: var(--medium-high); }
+.risk-medium-high .gauge-value { color: var(--medium-high); }
+.risk-medium-high .gauge-bar-value { background: linear-gradient(90deg, var(--medium-high), #ea580c); }
+
+.risk-medium .gauge-fill { stroke: var(--medium); }
+.risk-medium .gauge-value { color: var(--medium); }
+.risk-medium .gauge-bar-value { background: linear-gradient(90deg, var(--medium), #ca8a04); }
+
+.risk-low-medium .gauge-fill { stroke: var(--low-medium); }
+.risk-low-medium .gauge-value { color: var(--low-medium); }
+.risk-low-medium .gauge-bar-value { background: linear-gradient(90deg, var(--low-medium), #0891b2); }
+
+.risk-low .gauge-fill { stroke: var(--low); }
+.risk-low .gauge-value { color: var(--low); }
+.risk-low .gauge-bar-value { background: linear-gradient(90deg, var(--low), #34d399); }
+
+/* ── Reason ───────────────────────────────────────────────── */
+.card-reason {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.card-reason strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* ── Loading State ────────────────────────────────────────── */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    gap: 16px;
+    color: var(--text-muted);
+}
+
+.loading-state.hidden { display: none; }
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* ── Empty State ──────────────────────────────────────────── */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    gap: 8px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.empty-state svg {
+    width: 48px;
+    height: 48px;
+    stroke: var(--text-muted);
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+.empty-state p { font-size: 16px; font-weight: 600; color: var(--text); }
+.empty-state span { font-size: 13px; }
+.empty-state.hidden { display: none; }
+
+/* ── Footer ───────────────────────────────────────────────── */
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 32px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+}
+
+/* ── Card appear stagger ──────────────────────────────────── */
+.risk-card:nth-child(1) { animation-delay: 0s; }
+.risk-card:nth-child(2) { animation-delay: 0.08s; }
+.risk-card:nth-child(3) { animation-delay: 0.16s; }
+.risk-card:nth-child(4) { animation-delay: 0.24s; }
+.risk-card:nth-child(5) { animation-delay: 0.32s; }
+.risk-card:nth-child(6) { animation-delay: 0.40s; }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1200px) {
+    .summary-bar { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: 1024px) {
+    .summary-bar { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .header { flex-direction: column; gap: 12px; padding: 14px 16px; }
+    .header-right { width: 100%; justify-content: space-between; }
+    .main { padding: 16px; }
+    .summary-bar { grid-template-columns: repeat(2, 1fr); }
+    .risk-grid { grid-template-columns: 1fr; }
+    .filter-bar { gap: 6px; }
+    .filter-chip { padding: 6px 12px; font-size: 12px; }
+    .footer { flex-direction: column; gap: 4px; text-align: center; }
+}
+
+@media (max-width: 480px) {
+    .summary-bar { grid-template-columns: 1fr 1fr; }
+    .summary-card:last-child { grid-column: 1 / -1; }
+    .card-gauge { flex-direction: column; text-align: center; }
+    .gauge-details { width: 100%; }
+}
