@@ -1,0 +1,98 @@
+classDiagram
+    direction TB
+
+    class BusinessUnitMain {
+        +main(String[] args)
+    }
+    class BusinessUnitWebServer {
+        +start()
+        +stop()
+    }
+
+    class BatchLayer {
+        +rebuild()
+    }
+    class FileEventStoreReader {
+        +readAllEvents() List
+    }
+    class EventStoreReader {
+        <<interface>>
+        +readAllEvents() List
+    }
+    class BatchDatamart {
+        <<interface>>
+        +initialize()
+        +clear()
+        +saveHistoricalEvents(List)
+        +findAllHistoricalEvents() List
+    }
+    class SqliteBatchDatamart
+
+    class SpeedLayer {
+        +start()
+        +stop()
+    }
+
+    class ServingLayer {
+        +rebuild()
+    }
+    class ServingDatamart {
+        <<interface>>
+        +initialize()
+        +saveRiskSnapshot(CommodityRiskSnapshot)
+        +findAllRiskSnapshots() List
+        +findRiskSnapshotByCommodity(String) Optional
+    }
+    class SqliteServingDatamart
+    class CommodityRiskService {
+        +getAllRisks() List
+        +getRiskByCommodity(String) Optional
+    }
+
+    class EventProcessor~T~ {
+        <<interface>>
+        +process(List) Map
+    }
+    class CommodityPriceEventProcessor
+    class WeatherEventProcessor
+
+    class RiskPredictor {
+        <<interface>>
+        +predict(CommodityMetrics) CommodityRiskSnapshot
+    }
+    class MlApiRiskPredictor
+    class HeuristicRiskPredictor
+    class FallbackRiskPredictor {
+        +isUsingFallback() boolean
+    }
+
+    BusinessUnitMain --> BatchLayer
+    BusinessUnitMain --> SpeedLayer
+    BusinessUnitMain --> ServingLayer
+    BusinessUnitMain --> BusinessUnitWebServer
+
+    BatchLayer --> EventStoreReader
+    BatchLayer --> BatchDatamart
+    FileEventStoreReader ..|> EventStoreReader
+    SqliteBatchDatamart ..|> BatchDatamart
+
+    SpeedLayer --> BatchDatamart
+    SpeedLayer --> ServingLayer
+
+    ServingLayer --> BatchDatamart
+    ServingLayer --> ServingDatamart
+    ServingLayer --> RiskPredictor
+    ServingLayer --> EventProcessor~T~
+    CommodityPriceEventProcessor ..|> EventProcessor~T~
+    WeatherEventProcessor ..|> EventProcessor~T~
+
+    SqliteServingDatamart ..|> ServingDatamart
+
+    MlApiRiskPredictor ..|> RiskPredictor
+    HeuristicRiskPredictor ..|> RiskPredictor
+    FallbackRiskPredictor ..|> RiskPredictor
+    FallbackRiskPredictor --> MlApiRiskPredictor
+    FallbackRiskPredictor --> HeuristicRiskPredictor
+
+    BusinessUnitWebServer --> CommodityRiskService
+    CommodityRiskService --> ServingDatamart

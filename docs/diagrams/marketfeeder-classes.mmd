@@ -1,0 +1,39 @@
+classDiagram
+    direction TB
+
+    class MarketMain {
+        +main(String[] args)
+    }
+    class MarketController {
+        +start()
+    }
+    class MarketFeeder {
+        <<interface>>
+        +getMarketData(String) List
+    }
+    class AlphaVantageMarketFeeder
+    class AlphaVantageMarketParser {
+        +parse(String, String) List
+    }
+    class MarketPublisher {
+        <<interface>>
+        +publish(MarketEvent)
+        +close()
+    }
+    class ActiveMqEventPublisher
+    class MarketEvent {
+        <<record>>
+        +Instant ts
+        +String ss
+        +String symbol
+        +double open, high, low, close
+        +double adjustedClose
+        +long volume
+    }
+
+    MarketMain --> MarketController
+    MarketController --> MarketFeeder
+    MarketController --> MarketPublisher
+    AlphaVantageMarketFeeder ..|> MarketFeeder
+    AlphaVantageMarketFeeder --> AlphaVantageMarketParser
+    ActiveMqEventPublisher ..|> MarketPublisher

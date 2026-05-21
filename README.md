@@ -21,33 +21,32 @@ Both sources are dynamic (new data every week), complementary (weather causes �
 
 ![System Architecture](docs/diagrams/system-architecture.png)
 
+
 ### Lambda Architecture inside `businessunit`
 
 ```
 File Event Store ──► Batch Layer ──► businessunit_batch.db
-                                           │
-ActiveMQ ──► Speed Layer ──► (incremental  │
-                              insert)──────┘
-                                           │
-                                           ▼
-                                     Serving Layer
-                                           │
-                               ┌───────────┼───────────┐
-                               ▼                       ▼
-                        MlApiRiskPredictor    HeuristicRiskPredictor
-                        (primary, HTTP)           (fallback)
-                               │                       │
-                               └───────────┬───────────┘
-                                           ▼
-                                 businessunit_serving.db
-                                           │
-                                           ▼
+                                              │
+ActiveMQ ──► Speed Layer ──► (incremental     │
+                              insert) ────────┘
+                                              │
+                                              ▼
+                                        Serving Layer
+                                              │
+                                              ▼
+                                     FallbackRiskPredictor
+                                      (ML primary, HTTP)
+                                              │
+                                              ▼
+                                    businessunit_serving.db
+                                              │
+                                              ▼
                                   Javalin REST API + Frontend
 ```
 
 - **Batch Layer**: On startup, reads ALL historical events from the file event store, clears and rebuilds `businessunit_batch.db`.
-- **Speed Layer**: Subscribes durably to ActiveMQ. When a new event arrives, it inserts it incrementally into `businessunit_batch.db` (no full rebuild) and schedules a debounced serving layer rebuild.
-- **Serving Layer**: Reads from `businessunit_batch.db`, runs processors to compute metrics, calls the ML predictor, and writes risk snapshots to `businessunit_serving.db`.
+- **Speed Layer**: Subscribes durably to ActiveMQ. When a new event arrives, it inserts it incrementally into `businessunit_batch.db` and schedules a debounced serving layer rebuild.
+- **Serving Layer**: Reads from `businessunit_batch.db`, runs processors to compute commodity and weather metrics, calls `MlApiRiskPredictor` via HTTP, and writes risk snapshots to `businessunit_serving.db`.
 
 ### Two datamarts
 
@@ -537,7 +536,7 @@ eventstore ──► businessunit_batch.db ──► generate_dataset.py ──�
 ## Running tests
 
 ```bash
-# All Java modules (167 tests)
+# All Java modules (197 tests, 9 skipped — require ActiveMQ broker)
 mvn clean test
 
 # Single module

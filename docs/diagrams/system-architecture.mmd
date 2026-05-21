@@ -1,0 +1,22 @@
+graph TB
+    NASA[NASA POWER API] --> WF[WeatherFeeder]
+    AV[Alpha Vantage API] --> MF[MarketFeeder]
+
+    WF -->|publish| AMQ{{ActiveMQ Broker}}
+    MF -->|publish| AMQ
+
+    AMQ -->|subscribe durable| ESB[EventStoreBuilder]
+    ESB --> ES[(File Event Store)]
+
+    AMQ -->|subscribe durable| SPEED[BusinessUnit\nSpeed Layer]
+    ES -->|read at startup| BATCH[BusinessUnit\nBatch Layer]
+
+    BATCH --> BATCHDB[(businessunit_batch.db)]
+    SPEED -->|incremental insert| BATCHDB
+
+    BATCHDB --> SRV[BusinessUnit\nServing Layer]
+    SRV -->|predict| ML[ml-api\nPython FastAPI]
+    SRV --> SERVDB[(businessunit_serving.db)]
+
+    SERVDB --> API[Javalin REST API]
+    API --> FE[Web Dashboard]

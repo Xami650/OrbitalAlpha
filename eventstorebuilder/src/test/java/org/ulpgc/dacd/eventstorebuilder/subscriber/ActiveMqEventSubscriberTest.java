@@ -45,7 +45,7 @@ class ActiveMqEventSubscriberTest {
 
         publishMessage(topicName, jsonEvent);
 
-        Thread.sleep(500);
+        waitFor(() -> receivedEvents.size() >= 1, 2000);
 
         subscriber.close();
 
@@ -76,7 +76,7 @@ class ActiveMqEventSubscriberTest {
 
         publishMessage(topicName, jsonEvent);
 
-        Thread.sleep(500);
+        waitFor(() -> receivedEvents.size() >= 1, 2000);
 
         subscriber.close();
 
@@ -145,7 +145,7 @@ class ActiveMqEventSubscriberTest {
         publishMessage(commodityTopic, commodityEvent);
         publishMessage(weatherTopic, weatherEvent);
 
-        Thread.sleep(700);
+        waitFor(() -> receivedEvents.size() >= 2, 2000);
 
         subscriber.close();
 
@@ -245,6 +245,13 @@ class ActiveMqEventSubscriberTest {
             TextMessage message = session.createTextMessage(jsonEvent);
 
             producer.send(message);
+        }
+    }
+
+    private void waitFor(java.util.function.BooleanSupplier condition, long timeoutMs) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (!condition.getAsBoolean() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
         }
     }
 }

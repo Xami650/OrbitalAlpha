@@ -1,0 +1,44 @@
+classDiagram
+    direction TB
+
+    class ClimateMain {
+        +main(String[] args)
+    }
+    class ClimateController {
+        +start()
+        +close()
+    }
+    class ClimateFeeder {
+        <<interface>>
+        +fetch(Producer, DateRange) List
+    }
+    class NasaPowerClimateFeeder
+    class NasaPowerClimateParser {
+        +parse(String, Producer) List
+    }
+    class EventPublisher {
+        <<interface>>
+        +publish(String, String)
+        +close()
+    }
+    class ActiveMqEventPublisher
+    class WeatherDataAggregator {
+        +aggregate(List) Optional
+    }
+    class WeeklyDateChunker {
+        +currentWeek(LocalDate) DateRange
+        +backfillWeeks(LocalDate, int) List
+    }
+    class GsonEventSerializer {
+        +serialize(Object) String
+    }
+
+    ClimateMain --> ClimateController
+    ClimateController --> ClimateFeeder
+    ClimateController --> EventPublisher
+    ClimateController --> WeatherDataAggregator
+    ClimateController --> WeeklyDateChunker
+    ClimateController --> GsonEventSerializer
+    NasaPowerClimateFeeder ..|> ClimateFeeder
+    NasaPowerClimateFeeder --> NasaPowerClimateParser
+    ActiveMqEventPublisher ..|> EventPublisher

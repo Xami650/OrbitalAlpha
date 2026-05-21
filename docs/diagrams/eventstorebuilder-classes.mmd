@@ -1,29 +1,23 @@
 classDiagram
+    direction TB
+
     class EventStoreBuilderMain {
         +main(String[] args)
     }
     class EventStoreController {
-        -EventStore store
-        -EventSubscriber subscriber
         +start()
     }
     class EventStore {
-        &lt;&lt;interface&gt;&gt;
-        +store(String topic, String jsonEvent)
+        <<interface>>
+        +store(String, String)
     }
-    class FileEventStore {
-        +store(String topic, String jsonEvent)
-    }
+    class FileEventStore
     class EventSubscriber {
-        &lt;&lt;interface&gt;&gt;
-        +subscribe(EventMessageHandler handler)
+        <<interface>>
+        +subscribe(EventMessageHandler)
         +close()
     }
-    class ActiveMqEventSubscriber {
-        -String clientId
-        +subscribe(EventMessageHandler handler)
-        +close()
-    }
+    class ActiveMqEventSubscriber
 
     EventStoreBuilderMain --> EventStoreController
     EventStoreController --> EventStore
