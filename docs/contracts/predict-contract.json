@@ -1,0 +1,30 @@
+{
+  "description": "Contract between Java MlApiRiskPredictor (consumer) and Python ml-api /predict (provider)",
+  "request": {
+    "method": "POST",
+    "path": "/predict",
+    "contentType": "application/json",
+    "requiredFields": {
+      "commodity": "string",
+      "priceChangePercent": "number",
+      "precipitation": "number",
+      "rootZoneSoilWetness": "number",
+      "temperatureMax": "number",
+      "temperatureMin": "number",
+      "priceVolatility": "number",
+      "priceTrend": "number",
+      "precipitationDelta": "number",
+      "soilWetnessDelta": "number",
+      "temperatureMaxDelta": "number"
+    }
+  },
+  "response": {
+    "requiredFields": {
+      "commodity": "string",
+      "riskLevel": "string",
+      "riskScore": "number",
+      "reason": "string"
+    },
+    "validRiskLevels": ["LOW", "LOW_MEDIUM", "MEDIUM", "MEDIUM_HIGH", "HIGH"]
+  }
+}

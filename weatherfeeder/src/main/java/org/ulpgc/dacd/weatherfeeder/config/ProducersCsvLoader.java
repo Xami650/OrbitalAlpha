@@ -36,31 +36,31 @@ public class ProducersCsvLoader {
                             Producer::id,
                             Function.identity(),
                             (existing, duplicated) -> {
-                                throw new IllegalArgumentException("Productor duplicado: " + duplicated.id());
+                                throw new IllegalArgumentException("Duplicate producer: " + duplicated.id());
                             },
                             LinkedHashMap::new
                     ));
 
             if (loaded.isEmpty()) {
-                throw new IllegalArgumentException("El archivo de productores esta vacio: " + producersFilePath);
+                throw new IllegalArgumentException("Producers file is empty: " + producersFilePath);
             }
 
             return loaded;
 
         } catch (IOException e) {
-            throw new UncheckedIOException("No se pudo leer el archivo de productores: " + producersFilePath, e);
+            throw new UncheckedIOException("Could not read producers file: " + producersFilePath, e);
         }
     }
 
     private void validateFilePath(Path producersFilePath) {
         if (producersFilePath == null) {
-            throw new IllegalArgumentException("La ruta del archivo de productores no puede ser null.");
+            throw new IllegalArgumentException("Producers file path must not be null.");
         }
         if (!Files.exists(producersFilePath)) {
-            throw new IllegalArgumentException("No existe el archivo de productores: " + producersFilePath);
+            throw new IllegalArgumentException("Producers file does not exist: " + producersFilePath);
         }
         if (!Files.isRegularFile(producersFilePath)) {
-            throw new IllegalArgumentException("La ruta no corresponde a un archivo valido: " + producersFilePath);
+            throw new IllegalArgumentException("Path is not a valid file: " + producersFilePath);
         }
     }
 
@@ -77,8 +77,8 @@ public class ProducersCsvLoader {
 
         if (fields.length != EXPECTED_FIELDS) {
             throw new IllegalArgumentException(
-                    "Formato invalido en linea " + lineNumber +
-                            ". Formato esperado: id;name;commodityType;latitude;longitude"
+                    "Invalid format at line " + lineNumber +
+                            ". Expected: id;name;commodityType;latitude;longitude"
             );
         }
 
@@ -101,7 +101,7 @@ public class ProducersCsvLoader {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(
-                    "El campo " + fieldName + " no es un numero valido en la linea " + lineNumber + ": " + value,
+                    "Field " + fieldName + " is not a valid number at line " + lineNumber + ": " + value,
                     e
             );
         }
@@ -110,17 +110,17 @@ public class ProducersCsvLoader {
     private void validateRequiredField(String value, String fieldName, int lineNumber) {
         if (value.isBlank()) {
             throw new IllegalArgumentException(
-                    "El campo " + fieldName + " no puede estar vacio en la linea " + lineNumber
+                    "Field " + fieldName + " must not be blank at line " + lineNumber
             );
         }
     }
 
     private void validateCoordinates(double latitude, double longitude, int lineNumber) {
         if (latitude < -90 || latitude > 90) {
-            throw new IllegalArgumentException("Latitud fuera de rango en linea " + lineNumber + ": " + latitude);
+            throw new IllegalArgumentException("Latitude out of range at line " + lineNumber + ": " + latitude);
         }
         if (longitude < -180 || longitude > 180) {
-            throw new IllegalArgumentException("Longitud fuera de rango en linea " + lineNumber + ": " + longitude);
+            throw new IllegalArgumentException("Longitude out of range at line " + lineNumber + ": " + longitude);
         }
     }
 

@@ -9,10 +9,10 @@ public record DateRange(LocalDate start, LocalDate end) {
 
     public DateRange {
         if (start == null || end == null) {
-            throw new IllegalArgumentException("start y end no pueden ser null.");
+            throw new IllegalArgumentException("start and end must not be null.");
         }
         if (start.isAfter(end)) {
-            throw new IllegalArgumentException("start no puede ser posterior a end.");
+            throw new IllegalArgumentException("start must not be after end.");
         }
     }
 

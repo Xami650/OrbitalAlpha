@@ -120,7 +120,8 @@ public class BusinessUnitMain {
         return new SpeedLayer(
                 eventSubscriber,
                 batchDatamart,
-                servingLayer
+                servingLayer,
+                config
         );
     }
 }

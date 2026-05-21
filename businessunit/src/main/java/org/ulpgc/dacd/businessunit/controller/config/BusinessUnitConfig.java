@@ -11,6 +11,7 @@ public record BusinessUnitConfig(
         String batchDatamartUrl,
         String servingDatamartUrl,
         int apiPort,
-        String mlApiUrl
+        String mlApiUrl,
+        int debounceDelaySeconds
 ) {
 }

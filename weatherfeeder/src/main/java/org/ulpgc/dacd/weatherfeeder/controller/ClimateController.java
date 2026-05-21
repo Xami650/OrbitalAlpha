@@ -84,16 +84,16 @@ public class ClimateController implements AutoCloseable {
                 intervalHours,
                 TimeUnit.HOURS
         );
-        logger.info("Modo WEEKLY iniciado. Recoleccion cada {} horas.", intervalHours);
+        logger.info("WEEKLY mode started. Collection every {} hours.", intervalHours);
     }
 
     private void runBackfillSafely() {
-        logger.info("Modo BACKFILL iniciado para {} semanas.", config.backfillWeeks());
+        logger.info("BACKFILL mode started for {} weeks.", config.backfillWeeks());
         try {
             runBackfill();
-            logger.info("Backfill completado correctamente.");
+            logger.info("Backfill completed successfully.");
         } catch (Exception e) {
-            logger.error("Backfill abortado por error no controlado.", e);
+            logger.error("Backfill aborted due to unhandled error.", e);
         }
     }
 
@@ -101,27 +101,27 @@ public class ClimateController implements AutoCloseable {
         try {
             runWeeklyCycle();
         } catch (Exception e) {
-            logger.error("Error no controlado en el ciclo semanal.", e);
+            logger.error("Unhandled error in weekly cycle.", e);
         }
     }
 
     private void runWeeklyCycle() {
-        logger.info("Iniciando ciclo WEEKLY...");
+        logger.info("Starting WEEKLY cycle...");
         DateRange week = chunker.currentWeek(LocalDate.now(clock));
         forEachProducer(producer -> processBlockSafely(producer, week));
-        logger.info("Ciclo WEEKLY finalizado.");
+        logger.info("WEEKLY cycle finished.");
     }
 
     private void runBackfill() {
         List<DateRange> chunks = chunker.backfillWeeks(LocalDate.now(clock), config.backfillWeeks());
-        logger.info("Backfill: {} bloques de {} dias por productor.", chunks.size(), config.schedule().windowDays());
+        logger.info("Backfill: {} blocks of {} days per producer.", chunks.size(), config.schedule().windowDays());
 
         forEachProducer(producer -> {
-            logger.info("Backfill iniciado para {} ({} bloques).", producer.id(), chunks.size());
+            logger.info("Backfill started for {} ({} blocks).", producer.id(), chunks.size());
             for (DateRange chunk : chunks) {
                 processBlockSafely(producer, chunk);
             }
-            logger.info("Backfill finalizado para {}.", producer.id());
+            logger.info("Backfill finished for {}.", producer.id());
         });
     }
 
@@ -129,7 +129,7 @@ public class ClimateController implements AutoCloseable {
         for (String producerId : producersInfo.getAllIds()) {
             Producer producer = producersInfo.getById(producerId);
             if (producer == null) {
-                logger.error("Productor desconocido: {}", producerId);
+                logger.error("Unknown producer: {}", producerId);
                 continue;
             }
             action.accept(producer);
@@ -140,12 +140,12 @@ public class ClimateController implements AutoCloseable {
         try {
             List<WeatherEvent> events = feeder.fetch(producer, range);
             if (events.isEmpty()) {
-                logger.warn("Bloque {} de {} sin eventos validos.", range, producer.id());
+                logger.warn("Block {} of {} without valid events.", range, producer.id());
             } else {
                 publishAggregate(events, producer, range);
             }
         } catch (Exception e) {
-            logger.error("Bloque {} de {} fallo. Se continua con el siguiente.", range, producer.id(), e);
+            logger.error("Block {} of {} failed. Continuing with the next one.", range, producer.id(), e);
         } finally {
             pauseBetweenRequests();
         }
@@ -171,7 +171,7 @@ public class ClimateController implements AutoCloseable {
             Thread.sleep(pauseMs);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.warn("La pausa entre peticiones fue interrumpida.", e);
+            logger.warn("Pause between requests was interrupted.", e);
         }
     }
 }

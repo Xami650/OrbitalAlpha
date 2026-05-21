@@ -44,7 +44,9 @@ public class AlphaVantageMarketFeeder implements MarketFeeder {
                 logger.error("HTTP error {} fetching data for {}", response.code(), symbol);
                 throw new RuntimeException("HTTP Error: " + response.code());
             }
-            assert response.body() != null;
+            if (response.body() == null) {
+                throw new FeederConnectionException("Empty response body for " + symbol);
+            }
             return response.body().string();
         } catch (IOException e) {
             logger.error("Connection error fetching data for {}", symbol, e);

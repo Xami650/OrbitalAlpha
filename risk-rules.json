@@ -1,0 +1,35 @@
+{
+  "thresholds": {
+    "priceChangeStrong": 5.0,
+    "priceChangeModerate": 2.0,
+    "lowPrecipitation": 1.0,
+    "lowSoilWetness": 0.35,
+    "highTemperatureMax": 32.0,
+    "lowTemperatureMin": 3.0,
+    "highPriceVolatility": 4.0,
+    "highPriceTrend": 3.0,
+    "lowPrecipitationDelta": -2.0,
+    "lowSoilWetnessDelta": -0.15,
+    "highTemperatureMaxDelta": 5.0
+  },
+  "weights": {
+    "priceChangeStrong": 30.0,
+    "priceChangeModerate": 15.0,
+    "lowPrecipitation": 15.0,
+    "lowSoilWetness": 20.0,
+    "highTemperatureMax": 15.0,
+    "lowTemperatureMin": 15.0,
+    "highPriceVolatility": 10.0,
+    "highPriceTrend": 10.0,
+    "lowPrecipitationDelta": 5.0,
+    "lowSoilWetnessDelta": 5.0,
+    "highTemperatureMaxDelta": 5.0
+  },
+  "levels": [
+    { "minScore": 80.0, "label": "HIGH" },
+    { "minScore": 60.0, "label": "MEDIUM_HIGH" },
+    { "minScore": 40.0, "label": "MEDIUM" },
+    { "minScore": 20.0, "label": "LOW_MEDIUM" },
+    { "minScore": 0.0, "label": "LOW" }
+  ]
+}

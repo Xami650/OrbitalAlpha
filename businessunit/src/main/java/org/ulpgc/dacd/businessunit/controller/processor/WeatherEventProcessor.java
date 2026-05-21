@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
+import org.ulpgc.dacd.businessunit.model.Topics;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -17,8 +19,6 @@ import java.util.Map;
 public class WeatherEventProcessor implements EventProcessor<WeatherEventProcessor.WeatherMetrics> {
 
     private static final Logger logger = LoggerFactory.getLogger(WeatherEventProcessor.class);
-
-    private static final String WEATHER_TOPIC = "Weather";
     private static final int TEMPORAL_WINDOW_WEEKS = 52;
     private static final DateTimeFormatter FILE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -104,7 +104,7 @@ public class WeatherEventProcessor implements EventProcessor<WeatherEventProcess
     }
 
     private boolean isWeatherEvent(HistoricalEvent event) {
-        return event.topic().equalsIgnoreCase(WEATHER_TOPIC);
+        return event.topic().equalsIgnoreCase(Topics.WEATHER);
     }
 
     private JsonObject parseJson(HistoricalEvent event) {

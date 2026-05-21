@@ -20,10 +20,10 @@ public class WeatherDataAggregator {
 
     public WeatherDataAggregator(String sourceSystem, int expectedDays) {
         if (sourceSystem == null || sourceSystem.isBlank()) {
-            throw new IllegalArgumentException("sourceSystem no puede estar vacio.");
+            throw new IllegalArgumentException("sourceSystem must not be blank.");
         }
         if (expectedDays <= 0) {
-            throw new IllegalArgumentException("expectedDays debe ser > 0.");
+            throw new IllegalArgumentException("expectedDays must be > 0.");
         }
         this.sourceSystem = sourceSystem;
         this.expectedDays = expectedDays;
@@ -36,7 +36,7 @@ public class WeatherDataAggregator {
             String periodEnd
     ) {
         if (events == null || events.isEmpty()) {
-            logger.warn("Sin eventos validos para {} en el periodo {}-{}. No se publica agregado.",
+            logger.warn("No valid events for {} in period {}-{}. Aggregate not published.",
                     producer.id(), periodStart, periodEnd);
             return Optional.empty();
         }
@@ -49,7 +49,7 @@ public class WeatherDataAggregator {
         double avgTMin = averageField(events, WeatherEvent::temperatureMin, "temperatureMin", producer.id());
 
         if (anyNaN(avgPrecip, avgWet, avgTMax, avgTMin)) {
-            logger.warn("No hay dias validos suficientes para calcular todas las medias de {}. Se omite el agregado.",
+            logger.warn("Not enough valid days to compute all averages for {}. Aggregate skipped.",
                     producer.id());
             return Optional.empty();
         }
@@ -72,7 +72,7 @@ public class WeatherDataAggregator {
 
     private void warnIfIncompleteWindow(int daysUsed, String producerId, String start, String end) {
         if (daysUsed < expectedDays) {
-            logger.warn("Ventana incompleta para {}: {} dias validos de {} esperados ({}-{}).",
+            logger.warn("Incomplete window for {}: {} valid days out of {} expected ({}-{}).",
                     producerId, daysUsed, expectedDays, start, end);
         }
     }
@@ -89,7 +89,7 @@ public class WeatherDataAggregator {
         for (WeatherEvent event : events) {
             double value = extractor.applyAsDouble(event);
             if (Double.isNaN(value)) {
-                logger.warn("Valor invalido en {} para {} en {}. Dia omitido para esa media.",
+                logger.warn("Invalid value in {} for {} on {}. Day skipped for that average.",
                         fieldName, producerId, event.date());
                 continue;
             }

@@ -57,7 +57,7 @@ public class EventStoreBuilderConfigLoader {
             return properties;
 
         } catch (IOException e) {
-            throw new RuntimeException("Error leyendo " + configFile, e);
+            throw new RuntimeException("Error reading " + configFile, e);
         }
     }
 
@@ -67,7 +67,7 @@ public class EventStoreBuilderConfigLoader {
                 .getResourceAsStream(configFile);
 
         if (input == null) {
-            throw new IllegalStateException("No se encontró el archivo " + configFile);
+            throw new IllegalStateException("Configuration file not found: " + configFile);
         }
 
         return input;
@@ -77,7 +77,7 @@ public class EventStoreBuilderConfigLoader {
         String value = properties.getProperty(key);
 
         if (value == null || value.isBlank()) {
-            throw new IllegalStateException("Falta la propiedad obligatoria: " + key);
+            throw new IllegalStateException("Missing required property: " + key);
         }
 
         return value.trim();

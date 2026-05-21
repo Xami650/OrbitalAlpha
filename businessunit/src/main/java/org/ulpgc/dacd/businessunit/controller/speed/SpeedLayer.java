@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.controller.batch.BatchDatamart;
+import org.ulpgc.dacd.businessunit.controller.config.BusinessUnitConfig;
 import org.ulpgc.dacd.businessunit.controller.serving.ServingLayer;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
@@ -20,26 +21,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SpeedLayer {
 
     private static final Logger logger = LoggerFactory.getLogger(SpeedLayer.class);
-    private static final long DEBOUNCE_DELAY_SECONDS = 5;
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
 
     private final EventSubscriber eventSubscriber;
     private final BatchDatamart batchDatamart;
     private final ServingLayer servingLayer;
+    private final BusinessUnitConfig config;
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "speed-layer-debounce");
+        t.setDaemon(true);
+        return t;
+    });
     private final AtomicBoolean rebuildInProgress = new AtomicBoolean(false);
     private ScheduledFuture<?> pendingRebuild;
 
     public SpeedLayer(
             EventSubscriber eventSubscriber,
             BatchDatamart batchDatamart,
-            ServingLayer servingLayer
+            ServingLayer servingLayer,
+            BusinessUnitConfig config
     ) {
         this.eventSubscriber = eventSubscriber;
         this.batchDatamart = batchDatamart;
         this.servingLayer = servingLayer;
+        this.config = config;
     }
 
     public void start() {
@@ -61,7 +68,7 @@ public class SpeedLayer {
             pendingRebuild.cancel(false);
         }
 
-        pendingRebuild = scheduler.schedule(this::debouncedServingRebuild, DEBOUNCE_DELAY_SECONDS, TimeUnit.SECONDS);
+        pendingRebuild = scheduler.schedule(this::debouncedServingRebuild, config.debounceDelaySeconds(), TimeUnit.SECONDS);
     }
 
     private HistoricalEvent toHistoricalEvent(String topic, String jsonEvent) {
@@ -72,6 +79,7 @@ public class SpeedLayer {
         return new HistoricalEvent(topic, ss, fileDate, jsonEvent);
     }
 
+    // Coalesces rapid event bursts into a single rebuild; AtomicBoolean prevents overlapping rebuilds.
     private void debouncedServingRebuild() {
         if (!rebuildInProgress.compareAndSet(false, true)) {
             logger.info("Serving rebuild already in progress, skipping");

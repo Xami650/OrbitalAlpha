@@ -17,6 +17,7 @@ public class BusinessUnitConfigLoader {
     private static final String SERVING_DATAMART_URL_PROPERTY = "serving.datamart.url";
     private static final String API_PORT_PROPERTY = "api.port";
     private static final String ML_API_URL_PROPERTY = "ml.api.url";
+    private static final String DEBOUNCE_DELAY_SECONDS_PROPERTY = "speed.layer.debounce.seconds";
 
     private final String configFile;
 
@@ -35,7 +36,8 @@ public class BusinessUnitConfigLoader {
                 readBatchDatamartUrl(properties),
                 readServingDatamartUrl(properties),
                 readApiPort(properties),
-                readMlApiUrl(properties)
+                readMlApiUrl(properties),
+                readDebounceDelaySeconds(properties)
         );
     }
 
@@ -71,6 +73,10 @@ public class BusinessUnitConfigLoader {
 
     private String readMlApiUrl(Properties properties) {
         return readRequiredString(properties, ML_API_URL_PROPERTY);
+    }
+
+    private int readDebounceDelaySeconds(Properties properties) {
+        return readInt(properties, DEBOUNCE_DELAY_SECONDS_PROPERTY, 5);
     }
 
     private Properties loadProperties() {

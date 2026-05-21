@@ -1,14 +1,15 @@
 package org.ulpgc.dacd.weatherfeeder.config;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.ulpgc.dacd.weatherfeeder.model.WeatherConfig;
 import org.ulpgc.dacd.weatherfeeder.model.WeatherMode;
 
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class ConfigLoaderTest {
+class ConfigLoaderTest {
 
     private static Properties validProperties() {
         Properties props = new Properties();
@@ -27,57 +28,65 @@ public class ConfigLoaderTest {
     }
 
     @Test
-    public void loadsAllPropertiesCorrectly() {
+    void loadsAllPropertiesCorrectly() {
         WeatherConfig config = new ConfigLoader(validProperties()).load();
 
-        assertEquals(WeatherMode.WEEKLY, config.mode());
-        assertEquals(520, config.backfillWeeks());
-        assertEquals("weatherfeeder", config.sourceSystem());
-        assertEquals("tcp://localhost:61616", config.broker().url());
-        assertEquals("Weather", config.broker().weatherTopic());
-        assertEquals(1000L, config.api().rateLimitPauseMs());
-        assertEquals(24, config.schedule().collectionIntervalHours());
-        assertEquals(7, config.schedule().windowDays());
-        assertEquals(7, config.schedule().expectedDays());
+        assertThat(config.mode()).isEqualTo(WeatherMode.WEEKLY);
+        assertThat(config.backfillWeeks()).isEqualTo(520);
+        assertThat(config.sourceSystem()).isEqualTo("weatherfeeder");
+        assertThat(config.broker().url()).isEqualTo("tcp://localhost:61616");
+        assertThat(config.broker().weatherTopic()).isEqualTo("Weather");
+        assertThat(config.api().rateLimitPauseMs()).isEqualTo(1000L);
+        assertThat(config.schedule().collectionIntervalHours()).isEqualTo(24);
+        assertThat(config.schedule().windowDays()).isEqualTo(7);
+        assertThat(config.schedule().expectedDays()).isEqualTo(7);
     }
 
     @Test
-    public void backfillModeIsParsed() {
+    void backfillModeIsParsed() {
         Properties props = validProperties();
         props.setProperty("weather.mode", "BACKFILL");
         props.setProperty("weather.backfill.weeks", "210");
 
         WeatherConfig config = new ConfigLoader(props).load();
 
-        assertEquals(WeatherMode.BACKFILL, config.mode());
-        assertEquals(210, config.backfillWeeks());
+        assertThat(config.mode()).isEqualTo(WeatherMode.BACKFILL);
+        assertThat(config.backfillWeeks()).isEqualTo(210);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void invalidModeIsRejected() {
+    @Test
+    void invalidModeIsRejected() {
         Properties props = validProperties();
         props.setProperty("weather.mode", "PAST");
-        new ConfigLoader(props).load();
+
+        assertThatThrownBy(() -> new ConfigLoader(props).load())
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void nonPositiveBackfillDaysIsRejected() {
+    @Test
+    void nonPositiveBackfillWeeksIsRejected() {
         Properties props = validProperties();
         props.setProperty("weather.backfill.weeks", "0");
-        new ConfigLoader(props).load();
+
+        assertThatThrownBy(() -> new ConfigLoader(props).load())
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void nonNumericBackfillDaysIsRejected() {
+    @Test
+    void nonNumericBackfillWeeksIsRejected() {
         Properties props = validProperties();
         props.setProperty("weather.backfill.weeks", "abc");
-        new ConfigLoader(props).load();
+
+        assertThatThrownBy(() -> new ConfigLoader(props).load())
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void missingRequiredPropertyIsRejected() {
+    @Test
+    void missingRequiredPropertyIsRejected() {
         Properties props = validProperties();
         props.remove("broker.url");
-        new ConfigLoader(props).load();
+
+        assertThatThrownBy(() -> new ConfigLoader(props).load())
+                .isInstanceOf(IllegalStateException.class);
     }
 }

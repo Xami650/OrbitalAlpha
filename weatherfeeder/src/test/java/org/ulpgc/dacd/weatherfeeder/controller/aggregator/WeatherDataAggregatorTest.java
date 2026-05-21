@@ -1,7 +1,7 @@
 package org.ulpgc.dacd.weatherfeeder.controller.aggregator;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.ulpgc.dacd.weatherfeeder.controller.feeder.parser.NasaPowerClimateParser;
 import org.ulpgc.dacd.weatherfeeder.model.ProducersInfo.Producer;
 import org.ulpgc.dacd.weatherfeeder.model.events.WeatherAggregate;
@@ -10,11 +10,9 @@ import org.ulpgc.dacd.weatherfeeder.model.events.WeatherEvent;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class WeatherDataAggregatorTest {
+class WeatherDataAggregatorTest {
 
     private static final double DELTA = 1e-9;
     private static final String PERIOD_START = "20260509";
@@ -24,74 +22,74 @@ public class WeatherDataAggregatorTest {
     private NasaPowerClimateParser parser;
     private Producer producer;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         aggregator = new WeatherDataAggregator("weatherfeeder", 7);
         parser = new NasaPowerClimateParser("weatherfeeder");
         producer = new Producer("GC-01", "Gran Canaria Sur", "TOMATO", 27.9, -15.6);
     }
 
     @Test
-    public void averagesSevenValidDays() {
+    void averagesSevenValidDays() {
         String json = buildJson(
-                new double[]{0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0},   // PRECTOTCORR avg = 3.0
-                new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7},   // GWETROOT    avg = 0.4
-                new double[]{20, 21, 22, 23, 24, 25, 26},          // T2M_MAX     avg = 23.0
-                new double[]{10, 11, 12, 13, 14, 15, 16},          // T2M_MIN     avg = 13.0
+                new double[]{0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0},
+                new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7},
+                new double[]{20, 21, 22, 23, 24, 25, 26},
+                new double[]{10, 11, 12, 13, 14, 15, 16},
                 -999.0
         );
 
         List<WeatherEvent> events = parser.parse(json, producer);
-        assertEquals(7, events.size());
+        assertThat(events).hasSize(7);
 
         Optional<WeatherAggregate> result = aggregator.aggregate(events, producer, PERIOD_START, PERIOD_END);
 
-        assertTrue(result.isPresent());
+        assertThat(result).isPresent();
         WeatherAggregate agg = result.get();
-        assertEquals(7, agg.daysUsed());
-        assertEquals(3.0, agg.avgPrecipitation(), DELTA);
-        assertEquals(0.4, agg.avgRootZoneSoilWetness(), DELTA);
-        assertEquals(23.0, agg.avgTemperatureMax(), DELTA);
-        assertEquals(13.0, agg.avgTemperatureMin(), DELTA);
-        assertEquals(producer.id(), agg.producerId());
-        assertEquals(PERIOD_START, agg.periodStart());
-        assertEquals(PERIOD_END, agg.periodEnd());
+        assertThat(agg.daysUsed()).isEqualTo(7);
+        assertThat(agg.avgPrecipitation()).isCloseTo(3.0, org.assertj.core.data.Offset.offset(DELTA));
+        assertThat(agg.avgRootZoneSoilWetness()).isCloseTo(0.4, org.assertj.core.data.Offset.offset(DELTA));
+        assertThat(agg.avgTemperatureMax()).isCloseTo(23.0, org.assertj.core.data.Offset.offset(DELTA));
+        assertThat(agg.avgTemperatureMin()).isCloseTo(13.0, org.assertj.core.data.Offset.offset(DELTA));
+        assertThat(agg.producerId()).isEqualTo(producer.id());
+        assertThat(agg.periodStart()).isEqualTo(PERIOD_START);
+        assertThat(agg.periodEnd()).isEqualTo(PERIOD_END);
     }
 
     @Test
-    public void skipsDayWithFillValueAndAveragesOverRemainingDays() {
+    void skipsDayWithFillValueAndAveragesOverRemainingDays() {
         String json = buildJson(
-                new double[]{2.0, 4.0, 6.0, -999.0, 8.0, 10.0, 12.0}, // 6 válidos, suma 42 → 7.0
-                new double[]{0.2, 0.4, 0.6, 0.5, 0.8, 1.0, 1.2},      // día 4 se descarta
+                new double[]{2.0, 4.0, 6.0, -999.0, 8.0, 10.0, 12.0},
+                new double[]{0.2, 0.4, 0.6, 0.5, 0.8, 1.0, 1.2},
                 new double[]{20, 22, 24, 26, 28, 30, 32},
                 new double[]{10, 12, 14, 16, 18, 20, 22},
                 -999.0
         );
 
         List<WeatherEvent> events = parser.parse(json, producer);
-        assertEquals(6, events.size());
+        assertThat(events).hasSize(6);
 
         Optional<WeatherAggregate> result = aggregator.aggregate(events, producer, PERIOD_START, PERIOD_END);
 
-        assertTrue(result.isPresent());
+        assertThat(result).isPresent();
         WeatherAggregate agg = result.get();
-        assertEquals(6, agg.daysUsed());
-        assertEquals(7.0, agg.avgPrecipitation(), DELTA);
-        assertEquals((0.2 + 0.4 + 0.6 + 0.8 + 1.0 + 1.2) / 6.0, agg.avgRootZoneSoilWetness(), DELTA);
-        assertEquals((20 + 22 + 24 + 28 + 30 + 32) / 6.0, agg.avgTemperatureMax(), DELTA);
-        assertEquals((10 + 12 + 14 + 18 + 20 + 22) / 6.0, agg.avgTemperatureMin(), DELTA);
+        assertThat(agg.daysUsed()).isEqualTo(6);
+        assertThat(agg.avgPrecipitation()).isCloseTo(7.0, org.assertj.core.data.Offset.offset(DELTA));
+        assertThat(agg.avgRootZoneSoilWetness()).isCloseTo((0.2 + 0.4 + 0.6 + 0.8 + 1.0 + 1.2) / 6.0, org.assertj.core.data.Offset.offset(DELTA));
+        assertThat(agg.avgTemperatureMax()).isCloseTo((20 + 22 + 24 + 28 + 30 + 32) / 6.0, org.assertj.core.data.Offset.offset(DELTA));
+        assertThat(agg.avgTemperatureMin()).isCloseTo((10 + 12 + 14 + 18 + 20 + 22) / 6.0, org.assertj.core.data.Offset.offset(DELTA));
     }
 
     @Test
-    public void returnsEmptyWhenEventListIsEmpty() {
+    void returnsEmptyWhenEventListIsEmpty() {
         Optional<WeatherAggregate> result = aggregator.aggregate(List.of(), producer, PERIOD_START, PERIOD_END);
-        assertFalse(result.isPresent());
+        assertThat(result).isEmpty();
     }
 
     @Test
-    public void returnsEmptyWhenEventListIsNull() {
+    void returnsEmptyWhenEventListIsNull() {
         Optional<WeatherAggregate> result = aggregator.aggregate(null, producer, PERIOD_START, PERIOD_END);
-        assertFalse(result.isPresent());
+        assertThat(result).isEmpty();
     }
 
     private String buildJson(double[] prec, double[] wet, double[] tmax, double[] tmin, double fill) {

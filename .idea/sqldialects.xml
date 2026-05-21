@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="SqlDialectMappings">
-    <file url="file://$PROJECT_DIR$/businessunit/src/main/java/org/ulpgc/dacd/businessunit/controller/batch/SqliteBatchDatamart.java" dialect="SQLite" />
-    <file url="file://$PROJECT_DIR$/businessunit/src/main/java/org/ulpgc/dacd/businessunit/controller/serving/SqliteServingDatamart.java" dialect="SQLite" />
-    <file url="file://$PROJECT_DIR$/ml-api/generate_dataset.py" dialect="GenericSQL" />
-  </component>
-</project>

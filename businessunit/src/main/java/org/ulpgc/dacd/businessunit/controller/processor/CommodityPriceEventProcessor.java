@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
+import org.ulpgc.dacd.businessunit.model.Topics;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -17,8 +19,6 @@ import java.util.Map;
 public class CommodityPriceEventProcessor implements EventProcessor<CommodityPriceEventProcessor.PriceMetrics> {
 
     private static final Logger logger = LoggerFactory.getLogger(CommodityPriceEventProcessor.class);
-
-    private static final String COMMODITY_PRICE_TOPIC = "CommodityPrice";
     private static final int LOOKBACK_WINDOW = 8;
     private static final int TEMPORAL_WINDOW_WEEKS = 52;
     private static final DateTimeFormatter FILE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -82,7 +82,7 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
         for (int i = 1; i < orderedEvents.size(); i++) {
             double prev = readDouble(orderedEvents.get(i - 1), "close");
             double curr = readDouble(orderedEvents.get(i), "close");
-            if (prev != 0.0) {
+            if (Math.abs(prev) > 1e-9) {
                 changes.add(((curr - prev) / prev) * 100.0);
             }
         }
@@ -122,7 +122,7 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
     }
 
     private boolean isCommodityPriceEvent(HistoricalEvent event) {
-        return event.topic().equalsIgnoreCase(COMMODITY_PRICE_TOPIC);
+        return event.topic().equalsIgnoreCase(Topics.COMMODITY_PRICE);
     }
 
     private List<JsonObject> orderEventsByPriceTimestamp(List<JsonObject> events) {
@@ -145,7 +145,7 @@ public class CommodityPriceEventProcessor implements EventProcessor<CommodityPri
     }
 
     private double calculatePriceChangePercent(double latestClose, double previousClose) {
-        if (previousClose == 0.0) {
+        if (Math.abs(previousClose) < 1e-9) {
             return 0.0;
         }
 

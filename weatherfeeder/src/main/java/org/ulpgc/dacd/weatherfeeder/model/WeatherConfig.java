@@ -13,25 +13,25 @@ public record WeatherConfig(
 ) {
     public WeatherConfig {
         if (mode == null) {
-            throw new IllegalArgumentException("weather.mode no puede ser null.");
+            throw new IllegalArgumentException("weather.mode must not be null.");
         }
         if (backfillWeeks <= 0) {
-            throw new IllegalArgumentException("weather.backfill.weeks debe ser > 0.");
+            throw new IllegalArgumentException("weather.backfill.weeks must be > 0.");
         }
         if (producersFilePath == null) {
-            throw new IllegalArgumentException("producersFilePath no puede ser null.");
+            throw new IllegalArgumentException("producersFilePath must not be null.");
         }
         if (sourceSystem == null || sourceSystem.isBlank()) {
-            throw new IllegalArgumentException("weather.source.system no puede estar vacio.");
+            throw new IllegalArgumentException("weather.source.system must not be blank.");
         }
         if (broker == null) {
-            throw new IllegalArgumentException("broker no puede ser null.");
+            throw new IllegalArgumentException("broker must not be null.");
         }
         if (api == null) {
-            throw new IllegalArgumentException("api no puede ser null.");
+            throw new IllegalArgumentException("api must not be null.");
         }
         if (schedule == null) {
-            throw new IllegalArgumentException("schedule no puede ser null.");
+            throw new IllegalArgumentException("schedule must not be null.");
         }
     }
 }

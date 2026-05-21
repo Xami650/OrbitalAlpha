@@ -25,13 +25,13 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
 
     public NasaPowerClimateFeeder(OkHttpClient client, NasaPowerApiConfig apiConfig, NasaPowerClimateParser parser) {
         if (client == null) {
-            throw new IllegalArgumentException("client no puede ser null.");
+            throw new IllegalArgumentException("client must not be null.");
         }
         if (apiConfig == null) {
-            throw new IllegalArgumentException("apiConfig no puede ser null.");
+            throw new IllegalArgumentException("apiConfig must not be null.");
         }
         if (parser == null) {
-            throw new IllegalArgumentException("parser no puede ser null.");
+            throw new IllegalArgumentException("parser must not be null.");
         }
         this.client = client;
         this.apiConfig = apiConfig;
@@ -41,7 +41,7 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
     @Override
     public List<WeatherEvent> fetch(Producer producer, DateRange range) {
         if (producer == null) {
-            logger.error("Producer null al solicitar datos climaticos.");
+            logger.error("Producer is null when requesting climate data.");
             return Collections.emptyList();
         }
 
@@ -51,10 +51,10 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
         try (Response response = client.newCall(request).execute()) {
             return handleResponse(response, producer, range);
         } catch (IOException e) {
-            logger.error("Fallo de conexion con NASA POWER para {} en {}.", producer.id(), range, e);
+            logger.error("Connection failure with NASA POWER for {} in {}.", producer.id(), range, e);
             return Collections.emptyList();
         } catch (Exception e) {
-            logger.error("Error inesperado procesando {} en {}.", producer.id(), range, e);
+            logger.error("Unexpected error processing {} in {}.", producer.id(), range, e);
             return Collections.emptyList();
         }
     }
@@ -71,7 +71,7 @@ public class NasaPowerClimateFeeder implements ClimateFeeder {
 
     private List<WeatherEvent> handleResponse(Response response, Producer producer, DateRange range) throws IOException {
         if (!response.isSuccessful() || response.body() == null) {
-            logger.error("HTTP {} al consultar NASA POWER para {} en {}.", response.code(), producer.id(), range);
+            logger.error("HTTP {} when querying NASA POWER for {} in {}.", response.code(), producer.id(), range);
             return Collections.emptyList();
         }
         return parser.parse(response.body().string(), producer);

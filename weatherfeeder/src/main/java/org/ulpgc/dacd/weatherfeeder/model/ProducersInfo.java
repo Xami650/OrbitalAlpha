@@ -10,10 +10,10 @@ public class ProducersInfo {
 
     public ProducersInfo(Map<String, Producer> producers) {
         if (producers == null) {
-            throw new IllegalArgumentException("producers no puede ser null.");
+            throw new IllegalArgumentException("producers must not be null.");
         }
         if (producers.isEmpty()) {
-            throw new IllegalArgumentException("producers no puede estar vacio.");
+            throw new IllegalArgumentException("producers must not be empty.");
         }
         this.producers = new LinkedHashMap<>(producers);
     }

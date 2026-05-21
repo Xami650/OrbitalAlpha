@@ -7,26 +7,25 @@ import org.ulpgc.dacd.marketfeeder.controller.publisher.MarketPublisher;
 import org.ulpgc.dacd.marketfeeder.model.MarketEvent;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 class MarketControllerTest {
 
-    FakeMarketFeeder feeder;
-    FakeMarketPublisher publisher;
+    private MarketFeeder feeder;
+    private MarketPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        feeder = new FakeMarketFeeder();
-        publisher = new FakeMarketPublisher();
+        feeder = mock(MarketFeeder.class);
+        publisher = mock(MarketPublisher.class);
     }
 
     @Test
-    void start_whenFeederReturnsEvents_publishesThem() throws InterruptedException {
+    void start_whenFeederReturnsEvents_publishesThem() {
         MarketEvent event = marketEvent("WEAT");
-        feeder.eventsToReturn = List.of(event);
+        when(feeder.getMarketData("WEAT")).thenReturn(List.of(event));
 
         MarketController controller = new MarketController(
                 feeder,
@@ -38,15 +37,14 @@ class MarketControllerTest {
 
         controller.start();
 
-        Thread.sleep(300);
-
-        assertThat(feeder.requestedSymbols).contains("WEAT");
-        assertThat(publisher.publishedEvents).contains(event);
+        verify(feeder, timeout(1000)).getMarketData("WEAT");
+        verify(publisher, timeout(1000)).publish(event);
+        controller.close();
     }
 
     @Test
-    void start_whenFeederReturnsEmptyList_publishesNothing() throws InterruptedException {
-        feeder.eventsToReturn = List.of();
+    void start_whenFeederReturnsEmptyList_publishesNothing() {
+        when(feeder.getMarketData("WEAT")).thenReturn(List.of());
 
         MarketController controller = new MarketController(
                 feeder,
@@ -58,15 +56,15 @@ class MarketControllerTest {
 
         controller.start();
 
-        Thread.sleep(300);
-
-        assertThat(feeder.requestedSymbols).contains("WEAT");
-        assertThat(publisher.publishedEvents).isEmpty();
+        verify(feeder, timeout(1000)).getMarketData("WEAT");
+        verify(publisher, never()).publish(any());
+        controller.close();
     }
 
     @Test
-    void start_withMultipleSymbols_processesAllSymbols() throws InterruptedException {
-        feeder.eventsToReturn = List.of(marketEvent("GENERIC"));
+    void start_withMultipleSymbols_processesAllSymbols() {
+        MarketEvent event = marketEvent("GENERIC");
+        when(feeder.getMarketData(anyString())).thenReturn(List.of(event));
 
         MarketController controller = new MarketController(
                 feeder,
@@ -78,15 +76,15 @@ class MarketControllerTest {
 
         controller.start();
 
-        Thread.sleep(500);
-
-        assertThat(feeder.requestedSymbols)
-                .contains("WEAT", "CORN", "SOYB");
+        verify(feeder, timeout(1000)).getMarketData("WEAT");
+        verify(feeder, timeout(1000)).getMarketData("CORN");
+        verify(feeder, timeout(1000)).getMarketData("SOYB");
+        controller.close();
     }
 
     @Test
-    void start_whenFeederThrowsRuntimeException_doesNotPublishAnything() throws InterruptedException {
-        feeder.failOnGetMarketData = true;
+    void start_whenFeederThrowsRuntimeException_doesNotPublishAnything() {
+        when(feeder.getMarketData(anyString())).thenThrow(new RuntimeException("API error"));
 
         MarketController controller = new MarketController(
                 feeder,
@@ -98,9 +96,9 @@ class MarketControllerTest {
 
         controller.start();
 
-        Thread.sleep(300);
-
-        assertThat(publisher.publishedEvents).isEmpty();
+        verify(feeder, timeout(1000)).getMarketData("WEAT");
+        verify(publisher, never()).publish(any());
+        controller.close();
     }
 
     private MarketEvent marketEvent(String symbol) {
@@ -117,37 +115,5 @@ class MarketControllerTest {
                 4054912L,
                 0.0
         );
-    }
-
-    private static class FakeMarketFeeder implements MarketFeeder {
-
-        private final List<String> requestedSymbols = new ArrayList<>();
-        private List<MarketEvent> eventsToReturn = List.of();
-        private boolean failOnGetMarketData;
-
-        @Override
-        public List<MarketEvent> getMarketData(String symbol) {
-            requestedSymbols.add(symbol);
-
-            if (failOnGetMarketData) {
-                throw new RuntimeException("API error");
-            }
-
-            return eventsToReturn;
-        }
-    }
-
-    private static class FakeMarketPublisher implements MarketPublisher {
-
-        private final List<MarketEvent> publishedEvents = new ArrayList<>();
-
-        @Override
-        public void publish(MarketEvent event) {
-            publishedEvents.add(event);
-        }
-
-        @Override
-        public void close() {
-        }
     }
 }

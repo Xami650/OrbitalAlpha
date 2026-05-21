@@ -5,6 +5,7 @@ import org.ulpgc.dacd.businessunit.model.CommodityRiskSnapshot;
 import java.util.List;
 import java.util.Optional;
 
+/** Query facade over the serving datamart, used by the REST API to retrieve risk snapshots. */
 public class CommodityRiskService {
 
     private final ServingDatamart servingDatamart;

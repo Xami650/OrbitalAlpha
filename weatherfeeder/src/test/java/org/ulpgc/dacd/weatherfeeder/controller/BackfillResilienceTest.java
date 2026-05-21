@@ -1,7 +1,7 @@
 package org.ulpgc.dacd.weatherfeeder.controller;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.ulpgc.dacd.weatherfeeder.controller.aggregator.WeatherDataAggregator;
 import org.ulpgc.dacd.weatherfeeder.controller.chunker.WeeklyDateChunker;
@@ -24,7 +24,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class BackfillResilienceTest {
+class BackfillResilienceTest {
 
     private static final String PRODUCER_ID = "GC-01";
     private static final Producer PRODUCER = new Producer(PRODUCER_ID, "Gran Canaria", "TOMATO", 27.9, -15.6);
@@ -43,8 +43,8 @@ public class BackfillResilienceTest {
     private EventPublisher publisher;
     private ProducersInfo producersInfo;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         feeder = mock(ClimateFeeder.class);
         publisher = mock(EventPublisher.class);
         producersInfo = mock(ProducersInfo.class);
@@ -81,7 +81,7 @@ public class BackfillResilienceTest {
     }
 
     @Test
-    public void backfillContinuesWhenOneBlockFails() {
+    void backfillContinuesWhenOneBlockFails() {
         when(feeder.fetch(eq(PRODUCER), any(DateRange.class)))
                 .thenReturn(sevenValidDays())
                 .thenReturn(sevenValidDays())
@@ -97,7 +97,7 @@ public class BackfillResilienceTest {
     }
 
     @Test
-    public void backfillPublishesNothingWhenAllBlocksFail() {
+    void backfillPublishesNothingWhenAllBlocksFail() {
         when(feeder.fetch(eq(PRODUCER), any(DateRange.class)))
                 .thenThrow(new RuntimeException("NASA down"));
 
@@ -108,7 +108,7 @@ public class BackfillResilienceTest {
     }
 
     @Test
-    public void backfillEmitsMessagesInMostRecentFirstOrder() {
+    void backfillEmitsMessagesInMostRecentFirstOrder() {
         when(feeder.fetch(eq(PRODUCER), any(DateRange.class)))
                 .thenReturn(sevenValidDays());
 
@@ -118,11 +118,9 @@ public class BackfillResilienceTest {
         verify(feeder, atLeastOnce()).fetch(eq(PRODUCER), rangeCaptor.capture());
 
         List<DateRange> ranges = rangeCaptor.getAllValues();
-        assertEquals(3, ranges.size());
+        assertThat(ranges).hasSize(3);
         for (int i = 1; i < ranges.size(); i++) {
-            if (!ranges.get(i - 1).end().isAfter(ranges.get(i).end())) {
-                throw new AssertionError("El orden no es mas-reciente -> mas-antiguo");
-            }
+            assertThat(ranges.get(i - 1).end()).isAfter(ranges.get(i).end());
         }
     }
 

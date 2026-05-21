@@ -1,7 +1,6 @@
 package org.ulpgc.dacd.marketfeeder;
 
 import okhttp3.OkHttpClient;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ulpgc.dacd.marketfeeder.config.MarketFeederConfig;
@@ -12,8 +11,8 @@ import org.ulpgc.dacd.marketfeeder.controller.feeder.MarketFeeder;
 import org.ulpgc.dacd.marketfeeder.controller.feeder.parser.AlphaVantageMarketParser;
 import org.ulpgc.dacd.marketfeeder.controller.feeder.parser.MarketParser;
 import org.ulpgc.dacd.marketfeeder.controller.publisher.ActiveMqEventPublisher;
+import org.ulpgc.dacd.marketfeeder.controller.publisher.MarketPublisher;
 
-@SuppressWarnings("UnnecessaryModifier")
 public class MarketMain {
 
     private static final Logger logger = LoggerFactory.getLogger(MarketMain.class);
@@ -29,7 +28,6 @@ public class MarketMain {
         controller.start();
     }
 
-    @NotNull
     private static MarketController createController(MarketFeederConfig config) {
         return new MarketController(
                 createFeeder(config),
@@ -56,7 +54,7 @@ public class MarketMain {
         return new AlphaVantageMarketParser(config.maxWeeks());
     }
 
-    private static ActiveMqEventPublisher createPublisher(MarketFeederConfig config) {
+    private static MarketPublisher createPublisher(MarketFeederConfig config) {
         return new ActiveMqEventPublisher(
                 config.brokerUrl(),
                 config.topic()

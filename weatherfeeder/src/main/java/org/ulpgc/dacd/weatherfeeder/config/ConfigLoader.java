@@ -59,7 +59,7 @@ public class ConfigLoader {
                 )
         );
 
-        logger.info("Configuracion cargada: mode={}, backfillWeeks={}, producersFile={}",
+        logger.info("Configuration loaded: mode={}, backfillWeeks={}, producersFile={}",
                 config.mode(), config.backfillWeeks(), config.producersFilePath());
 
         return config;
@@ -71,7 +71,7 @@ public class ConfigLoader {
             return WeatherMode.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
-                    "Valor invalido para " + KEY_MODE + ": '" + raw + "'. Valores validos: WEEKLY, BACKFILL.", e);
+                    "Invalid value for " + KEY_MODE + ": '" + raw + "'. Valid values: WEEKLY, BACKFILL.", e);
         }
     }
 
@@ -80,11 +80,11 @@ public class ConfigLoader {
         try {
             int value = Integer.parseInt(raw.trim());
             if (value <= 0) {
-                throw new IllegalArgumentException(key + " debe ser > 0: " + raw);
+                throw new IllegalArgumentException(key + " must be > 0: " + raw);
             }
             return value;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(key + " no es un entero valido: " + raw, e);
+            throw new IllegalArgumentException(key + " is not a valid integer: " + raw, e);
         }
     }
 
@@ -93,18 +93,18 @@ public class ConfigLoader {
         try {
             long value = Long.parseLong(raw.trim());
             if (value < 0) {
-                throw new IllegalArgumentException(key + " no puede ser negativo: " + raw);
+                throw new IllegalArgumentException(key + " must not be negative: " + raw);
             }
             return value;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(key + " no es un entero valido: " + raw, e);
+            throw new IllegalArgumentException(key + " is not a valid integer: " + raw, e);
         }
     }
 
     private String requireString(String key) {
         String value = properties.getProperty(key);
         if (value == null || value.isBlank()) {
-            throw new IllegalStateException("Falta la propiedad obligatoria '" + key + "' en " + DEFAULT_PROPERTIES_FILE);
+            throw new IllegalStateException("Missing required property '" + key + "' in " + DEFAULT_PROPERTIES_FILE);
         }
         return value.trim();
     }
@@ -118,7 +118,7 @@ public class ConfigLoader {
                 return props;
             }
         } catch (IOException e) {
-            logger.warn("No se pudo leer {} del classpath.", resource, e);
+            logger.warn("Could not read {} from classpath.", resource, e);
         }
 
         Path cwdFile = Paths.get(resource);
@@ -127,10 +127,10 @@ public class ConfigLoader {
                 props.load(in);
                 return props;
             } catch (IOException e) {
-                logger.warn("No se pudo leer {} del cwd.", cwdFile, e);
+                logger.warn("Could not read {} from working directory.", cwdFile, e);
             }
         }
 
-        throw new IllegalStateException("No se encontro " + resource + " ni en el classpath ni en el cwd.");
+        throw new IllegalStateException(resource + " not found in classpath or working directory.");
     }
 }

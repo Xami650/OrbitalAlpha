@@ -3,9 +3,11 @@ package org.ulpgc.dacd.businessunit.controller.speed;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
 import org.ulpgc.dacd.businessunit.controller.batch.BatchDatamart;
+import org.ulpgc.dacd.businessunit.controller.config.BusinessUnitConfig;
 import org.ulpgc.dacd.businessunit.controller.serving.ServingLayer;
 import org.ulpgc.dacd.businessunit.model.events.HistoricalEvent;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SpeedLayerTest {
 
     private static final Gson gson = new Gson();
+    private static final BusinessUnitConfig CONFIG = new BusinessUnitConfig(
+            "broker", "client", List.of("topic"), Path.of("store"), "batch", "serving", 8080, "ml", 1
+    );
 
     @Test
     void ingestsEventIntoBatchDatamart() throws Exception {
@@ -27,7 +32,7 @@ class SpeedLayerTest {
         ServingLayer servingLayer = countingServingLayer(rebuildLatch);
         FakeEventSubscriber subscriber = new FakeEventSubscriber();
 
-        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer);
+        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer, CONFIG);
         speedLayer.start();
 
         subscriber.emit("CommodityPrice", priceEventJson("WEAT", 5.80));
@@ -50,7 +55,7 @@ class SpeedLayerTest {
         ServingLayer servingLayer = countingServingLayer(rebuildLatch, rebuildCount);
         FakeEventSubscriber subscriber = new FakeEventSubscriber();
 
-        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer);
+        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer, CONFIG);
         speedLayer.start();
 
         subscriber.emit("CommodityPrice", priceEventJson("WEAT", 5.80));
@@ -69,7 +74,7 @@ class SpeedLayerTest {
         ServingLayer servingLayer = countingServingLayer(rebuildLatch, rebuildCount);
         FakeEventSubscriber subscriber = new FakeEventSubscriber();
 
-        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer);
+        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer, CONFIG);
         speedLayer.start();
 
         subscriber.emit("CommodityPrice", priceEventJson("WEAT", 5.80));
@@ -89,7 +94,7 @@ class SpeedLayerTest {
         CapturingBatchDatamart batchDatamart = new CapturingBatchDatamart();
         ServingLayer servingLayer = countingServingLayer(new CountDownLatch(1));
 
-        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer);
+        SpeedLayer speedLayer = new SpeedLayer(subscriber, batchDatamart, servingLayer, CONFIG);
         speedLayer.start();
         speedLayer.stop();
 

@@ -4,6 +4,8 @@ import joblib
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from risk_rules import level_from_score, build_reason
+
 MODEL_PATH = Path("model/commodity_risk_model.pkl")
 
 FEATURE_COLUMNS = [
@@ -61,13 +63,16 @@ def predict(request: PredictionRequest):
     classes = list(model.classes_)
 
     risk_score = _score_from_probabilities(classes, probabilities)
-    risk_level = _level_from_score(risk_score)
+    risk_level = level_from_score(risk_score)
+
+    metrics_dict = {col: getattr(request, col) for col in FEATURE_COLUMNS}
+    reason = build_reason(metrics_dict, risk_level)
 
     return PredictionResponse(
         commodity=request.commodity.upper(),
         riskLevel=risk_level,
         riskScore=risk_score,
-        reason=_build_reason(request, risk_level),
+        reason=reason,
     )
 
 
@@ -81,56 +86,3 @@ def _score_from_probabilities(classes: list, probabilities) -> float:
     }
     score = sum(score_by_level.get(str(c), 0.0) * p for c, p in zip(classes, probabilities))
     return round(score, 2)
-
-
-def _level_from_score(score: float) -> str:
-    if score >= 80:
-        return "HIGH"
-    if score >= 60:
-        return "MEDIUM_HIGH"
-    if score >= 40:
-        return "MEDIUM"
-    if score >= 20:
-        return "LOW_MEDIUM"
-    return "LOW"
-
-
-def _build_reason(request: PredictionRequest, risk_level: str) -> str:
-    reasons = []
-
-    if request.priceChangePercent > 5:
-        reasons.append("strong price increase")
-    elif request.priceChangePercent > 2:
-        reasons.append("moderate price increase")
-
-    if request.priceVolatility > 4:
-        reasons.append("high price volatility")
-
-    if request.priceTrend > 3:
-        reasons.append("sustained upward price trend")
-
-    if request.precipitation < 1:
-        reasons.append("low precipitation")
-
-    if request.precipitationDelta < -2:
-        reasons.append("precipitation below recent average")
-
-    if 0 < request.rootZoneSoilWetness < 0.35:
-        reasons.append("low root-zone soil wetness")
-
-    if request.soilWetnessDelta < -0.15:
-        reasons.append("soil wetness below recent average")
-
-    if request.temperatureMax > 32:
-        reasons.append("high maximum temperature")
-
-    if request.temperatureMaxDelta > 5:
-        reasons.append("temperature above recent average")
-
-    if request.temperatureMin < 3:
-        reasons.append("low minimum temperature")
-
-    if not reasons:
-        return f"{risk_level} risk: market and weather indicators remain stable."
-
-    return f"{risk_level} risk due to " + ", ".join(reasons) + "."

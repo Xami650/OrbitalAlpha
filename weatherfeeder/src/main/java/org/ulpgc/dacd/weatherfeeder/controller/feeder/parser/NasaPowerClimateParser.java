@@ -20,7 +20,7 @@ public class NasaPowerClimateParser {
 
     public NasaPowerClimateParser(String sourceSystem) {
         if (sourceSystem == null || sourceSystem.isBlank()) {
-            throw new IllegalArgumentException("sourceSystem no puede estar vacio.");
+            throw new IllegalArgumentException("sourceSystem must not be blank.");
         }
         this.sourceSystem = sourceSystem;
     }
@@ -50,7 +50,7 @@ public class NasaPowerClimateParser {
         try {
             return Optional.of(JsonParser.parseString(jsonResponse).getAsJsonObject());
         } catch (Exception e) {
-            logger.error("La respuesta de NASA POWER para {} no es un JSON válido.", producerId, e);
+            logger.error("NASA POWER response for {} is not valid JSON.", producerId, e);
             return Optional.empty();
         }
     }
@@ -73,14 +73,14 @@ public class NasaPowerClimateParser {
         Optional<JsonObject> properties = extractObject(jsonObject, KEY_PROPERTIES);
 
         if (properties.isEmpty()) {
-            logger.error("La respuesta de NASA POWER para {} no contiene '{}'.", producerId, KEY_PROPERTIES);
+            logger.error("NASA POWER response for {} does not contain '{}'.", producerId, KEY_PROPERTIES);
             return Optional.empty();
         }
 
         Optional<JsonObject> parameterObject = extractObject(properties.get(), KEY_PARAMETER);
 
         if (parameterObject.isEmpty()) {
-            logger.error("La respuesta de NASA POWER para {} no contiene '{}'.", producerId, KEY_PARAMETER);
+            logger.error("NASA POWER response for {} does not contain '{}'.", producerId, KEY_PARAMETER);
             return Optional.empty();
         }
 
@@ -103,7 +103,7 @@ public class NasaPowerClimateParser {
         JsonArray messages = jsonObject.getAsJsonArray(KEY_MESSAGES);
 
         if (!messages.isEmpty()) {
-            logger.warn("NASA POWER devolvió mensajes para {}: {}", producerId, messages);
+            logger.warn("NASA POWER returned messages for {}: {}", producerId, messages);
         }
     }
 
@@ -121,14 +121,14 @@ public class NasaPowerClimateParser {
         try {
             return header.get(KEY_FILL_VALUE).getAsDouble();
         } catch (Exception e) {
-            logger.warn("No se pudo leer fill_value de la respuesta.", e);
+            logger.warn("Could not read fill_value from response.", e);
             return null;
         }
     }
 
     private List<WeatherEvent> parseParameters(JsonObject parameterObject, Double fillValue, Producer producer) {
         if (!hasAllRequiredParameters(parameterObject)) {
-            logger.error("Faltan parámetros esperados en la respuesta de NASA POWER para {}.", producer.id());
+            logger.error("Missing expected parameters in NASA POWER response for {}.", producer.id());
             return List.of();
         }
 
@@ -161,7 +161,7 @@ public class NasaPowerClimateParser {
             ClimateSeries series
     ) {
         if (!isCompleteDate(date, series)) {
-            logger.warn("Fecha {} incompleta para {}. Se omite.", date, producer.id());
+            logger.warn("Incomplete date {} for {}. Skipped.", date, producer.id());
             return Optional.empty();
         }
 
@@ -187,7 +187,7 @@ public class NasaPowerClimateParser {
         }
 
         if (hasFillValues(measurements.get())) {
-            logger.warn("Fecha {} de {} omitida por contener valores de relleno de NASA POWER.", date, producer.id());
+            logger.warn("Date {} of {} skipped due to NASA POWER fill values.", date, producer.id());
             return Optional.empty();
         }
 
@@ -203,7 +203,7 @@ public class NasaPowerClimateParser {
         try {
             return Optional.of(readClimateMeasurements(date, fillValue, series));
         } catch (Exception e) {
-            logger.warn("Día {} de {} ignorado por error de parseo.", date, producer.id(), e);
+            logger.warn("Day {} of {} ignored due to parsing error.", date, producer.id(), e);
             return Optional.empty();
         }
     }

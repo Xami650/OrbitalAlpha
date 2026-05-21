@@ -11,7 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class MarketController {
+public class MarketController implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(MarketController.class);
 
@@ -20,6 +20,8 @@ public class MarketController {
     private final List<String> symbols;
     private final int intervalHours;
     private final long pauseMs;
+
+    private ScheduledExecutorService scheduler;
 
     public MarketController(MarketFeeder feeder, MarketPublisher publisher, List<String> symbols, int intervalHours, long pauseMs) {
         this.feeder = feeder;
@@ -30,12 +32,11 @@ public class MarketController {
     }
 
     public void start() {
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler = Executors.newScheduledThreadPool(1);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Closing market scheduler...");
-            scheduler.shutdown();
-            publisher.close();
+            this.close();
         }));
         scheduler.scheduleWithFixedDelay(
                 this::runCycleSafely,
@@ -45,6 +46,14 @@ public class MarketController {
         );
 
         logger.info("Market controller started. Collection every {} hours for symbols: {}.", intervalHours, symbols);
+    }
+
+    @Override
+    public void close() {
+        if (scheduler != null) {
+            scheduler.shutdown();
+        }
+        publisher.close();
     }
 
     private void runCycleSafely(){

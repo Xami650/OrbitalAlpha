@@ -47,7 +47,7 @@ public class ClimateMain {
         );
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("Cerrando ClimateController...");
+            logger.info("Closing ClimateController...");
             controller.close();
         }));
 

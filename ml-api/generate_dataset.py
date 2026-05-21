@@ -27,6 +27,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+from risk_rules import calculate_risk_score, level_from_score
+
 OUTPUT_PATH = Path("data/training_dataset.csv")
 DEFAULT_DB_PATH = Path("../businessunit_batch.db")
 LOOKBACK_WINDOW = 8
@@ -231,49 +233,8 @@ def _build_dataset_rows(price_features: list[dict], weather_scenarios: list[dict
 
 
 def _assign_risk_level(row: dict) -> str:
-    score = 0.0
-
-    if row["priceChangePercent"] > 5:
-        score += 30
-    elif row["priceChangePercent"] > 2:
-        score += 15
-
-    if row["precipitation"] < 1:
-        score += 15
-
-    if 0 < row["rootZoneSoilWetness"] < 0.35:
-        score += 20
-
-    if row["temperatureMax"] > 32:
-        score += 15
-
-    if row["temperatureMin"] < 3:
-        score += 15
-
-    if row["priceVolatility"] > 4:
-        score += 10
-
-    if row["priceTrend"] > 3:
-        score += 10
-
-    if row["precipitationDelta"] < -2:
-        score += 5
-
-    if row["soilWetnessDelta"] < -0.15:
-        score += 5
-
-    if row["temperatureMaxDelta"] > 5:
-        score += 5
-
-    if score >= 80:
-        return "HIGH"
-    if score >= 60:
-        return "MEDIUM_HIGH"
-    if score >= 40:
-        return "MEDIUM"
-    if score >= 20:
-        return "LOW_MEDIUM"
-    return "LOW"
+    score = calculate_risk_score(row)
+    return level_from_score(score)
 
 
 if __name__ == "__main__":
